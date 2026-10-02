@@ -14,9 +14,17 @@ const descriptions = {
 };
 const stage = (index: number) => ({ "--stage": index }) as CSSProperties;
 
-export function ProjectVisual({ kind, large = false }: { kind: Project["kind"]; large?: boolean }) {
+export function ProjectVisual({
+  kind,
+  large = false,
+  shared = true,
+}: {
+  kind: Project["kind"];
+  large?: boolean;
+  shared?: boolean;
+}) {
   const id = useId().replaceAll(":", "");
-  const { lite, paused } = useMotionPreferences();
+  const { quality, paused, quiet, dormant, reducedMotion } = useMotionPreferences();
   return (
     <>
       {large && (
@@ -25,11 +33,22 @@ export function ProjectVisual({ kind, large = false }: { kind: Project["kind"]; 
         </p>
       )}
       <ViewTransition
-        name={`project-diagram-${kind}`}
+        name={shared ? `project-diagram-${kind}` : undefined}
         default="none"
-        share={lite || paused ? "none" : "module-morph"}
+        share={quality === "high" && !paused && !reducedMotion ? "module-morph" : "none"}
       >
-        <div className={`project-visual visual-${kind}${large ? " large" : ""}`} aria-hidden="true">
+        <div
+          className={`project-visual visual-${kind}${large ? " large" : ""}`}
+          aria-hidden="true"
+          data-play={
+            paused || quiet || dormant || reducedMotion
+              ? "static"
+              : large && quality !== "low"
+                ? "loop"
+                : "once"
+          }
+          data-cursor={large ? "TRACE" : undefined}
+        >
           <svg viewBox="0 0 500 280" fill="none">
             <defs>
               <pattern id={`grid-${id}`} width="25" height="25" patternUnits="userSpaceOnUse">
@@ -45,19 +64,14 @@ export function ProjectVisual({ kind, large = false }: { kind: Project["kind"]; 
             <g className="diagram-ink" stroke="currentColor" strokeWidth="1">
               {kind === "vision" && (
                 <>
-                  <g className="diagram-stage" style={stage(0)}>
+                  <g className="diagram-stage" data-step="0" style={stage(0)}>
                     <path d="M35 69V49H55M299 49H319V69M35 202V222H55M299 222H319V202" />
                     <path d="M35 83H319M35 202H319" opacity=".2" />
                     <text x="36" y="37">
                       CAMERAX / FRAME INPUT
                     </text>
                   </g>
-                  <g className="diagram-stage" style={stage(1)}>
-                    <path
-                      d="M71 211L120 70H238L283 211M120 70L139 211M238 70L218 211"
-                      opacity=".35"
-                    />
-                    <path d="M159 211L167 132H193L201 211Z" fill="currentColor" opacity=".07" />
+                  <g className="diagram-stage" data-step="1" style={stage(1)}>
                     <rect x="162" y="104" width="39" height="79" strokeDasharray="3 3" />
                     <circle cx="181" cy="120" r="6" />
                     <path d="M181 127V157M169 140H193M181 157L170 175M181 157L192 175" />
@@ -65,40 +79,50 @@ export function ProjectVisual({ kind, large = false }: { kind: Project["kind"]; 
                       OBJECT_01
                     </text>
                   </g>
-                  <g className="diagram-stage corridor-highlight" style={stage(2)}>
+                  <g className="diagram-stage" data-step="2" style={stage(2)}>
+                    <path
+                      d="M71 211L120 70H238L283 211M120 70L139 211M238 70L218 211"
+                      opacity=".35"
+                    />
+                    <path d="M159 211L167 132H193L201 211Z" fill="currentColor" opacity=".07" />
+                    <text x="69" y="238">
+                      LEFT
+                    </text>
+                    <text x="161" y="238">
+                      CENTER
+                    </text>
+                    <text x="257" y="238">
+                      RIGHT
+                    </text>
+                  </g>
+                  <g className="diagram-stage corridor-highlight" data-step="3" style={stage(3)}>
                     <path
                       d="M144 202L160 72H201L218 202Z"
                       fill="currentColor"
                       fillOpacity=".08"
                       strokeDasharray="3 5"
                     />
-                    <text x="69" y="238">
-                      LEFT
-                    </text>
-                    <text x="150" y="238">
-                      CENTER / RISK
-                    </text>
-                    <text x="257" y="238">
-                      RIGHT
+                    <text x="156" y="257">
+                      RISK ACTIVE
                     </text>
                   </g>
                   <path
                     d="M322 131H346M370 92V109M370 147V175M370 202H390"
                     className="diagram-link"
                   />
-                  <g className="diagram-stage" style={stage(1)}>
+                  <g className="diagram-stage" data-step="1" style={stage(1)}>
                     <rect x="346" y="56" width="116" height="35" />
                     <text x="358" y="78">
                       DETECTION
                     </text>
                   </g>
-                  <g className="diagram-stage" style={stage(3)}>
+                  <g className="diagram-stage" data-step="4" style={stage(4)}>
                     <rect x="346" y="110" width="116" height="36" />
                     <text x="358" y="133">
-                      RISK LOGIC
+                      DECISION
                     </text>
                   </g>
-                  <g className="diagram-stage" style={stage(4)}>
+                  <g className="diagram-stage" data-step="5" style={stage(5)}>
                     <rect x="346" y="175" width="116" height="51" />
                     <text x="358" y="196">
                       VOICE
@@ -115,15 +139,19 @@ export function ProjectVisual({ kind, large = false }: { kind: Project["kind"]; 
                     JOURNEY / ILLUSTRATIVE SCENARIO
                   </text>
                   <path d="M85 153C128 24 318 24 387 125" strokeDasharray="3 6" opacity=".3" />
-                  <path d="M85 153C128 24 318 24 387 125" className="diagram-link route-arc" />
-                  <g className="diagram-stage" style={stage(0)}>
+                  <path
+                    d="M85 153C128 24 318 24 387 125"
+                    className="diagram-link route-arc diagram-stage"
+                    data-step="2"
+                  />
+                  <g className="diagram-stage" data-step="0" style={stage(0)}>
                     <circle cx="85" cy="153" r="20" />
                     <circle cx="85" cy="153" r="4" fill="currentColor" />
                     <text x="44" y="194">
                       BUDAPEST
                     </text>
                   </g>
-                  <g className="diagram-stage" style={stage(1)}>
+                  <g className="diagram-stage" data-step="1" style={stage(1)}>
                     <circle cx="387" cy="125" r="20" />
                     <circle cx="387" cy="125" r="4" fill="currentColor" />
                     <text x="364" y="164">
@@ -137,7 +165,12 @@ export function ProjectVisual({ kind, large = false }: { kind: Project["kind"]; 
                     ["CHAT", 304],
                     ["ORDER", 385],
                   ].map(([label, x], index) => (
-                    <g key={label} className="diagram-stage" style={stage(index + 1)}>
+                    <g
+                      key={label}
+                      className="diagram-stage"
+                      data-step={index + 3}
+                      style={stage(index + 3)}
+                    >
                       <rect x={Number(x) - 15} y="203" width="76" height="29" fill="#0b131a" />
                       <text x={Number(x) - 8} y="222">
                         {label}
@@ -145,6 +178,8 @@ export function ProjectVisual({ kind, large = false }: { kind: Project["kind"]; 
                     </g>
                   ))}
                   <path
+                    className="diagram-stage"
+                    data-step="2"
                     d="M197 94L210 101L201 105L197 115L194 104L184 100L194 98Z"
                     fill="currentColor"
                     stroke="none"
@@ -165,7 +200,12 @@ export function ProjectVisual({ kind, large = false }: { kind: Project["kind"]; 
                     { x: 199, y: 157, title: "CHAPTERS", sub: "PROGRESSION" },
                     { x: 363, y: 157, title: "ARCHIVE", sub: "PERSIST" },
                   ].map((node, index) => (
-                    <g key={node.title} className="diagram-stage" style={stage(index)}>
+                    <g
+                      key={node.title}
+                      className="diagram-stage"
+                      data-step={index}
+                      style={stage(index)}
+                    >
                       <rect x={node.x} y={node.y} width="102" height="51" fill="#111619" />
                       <path
                         d={`M${node.x} ${node.y + 9}V${node.y}H${node.x + 16}`}
@@ -220,11 +260,17 @@ export function ProjectVisual({ kind, large = false }: { kind: Project["kind"]; 
                         strokeOpacity=".5"
                       />
                     ))}
-                    <g className="diagram-stage" style={stage(1)}>
+                    <g className="diagram-stage" data-step="1" style={stage(1)}>
                       <circle cx="34.5" cy="80.5" r="5.5" strokeDasharray="2 2" />
-                      <circle cx="115" cy="115" r="5.5" strokeDasharray="2 2" />
+                      <circle
+                        cx="115"
+                        cy="115"
+                        r="5.5"
+                        strokeDasharray="2 2"
+                        data-alternative="true"
+                      />
                     </g>
-                    <g className="diagram-stage" style={stage(4)}>
+                    <g className="diagram-stage" data-step="5" style={stage(5)}>
                       <circle cx="34.5" cy="80.5" r="9" />
                       <circle cx="34.5" cy="80.5" r="4" fill="currentColor" />
                     </g>
@@ -233,10 +279,12 @@ export function ProjectVisual({ kind, large = false }: { kind: Project["kind"]; 
                     MINIMAX / SEARCH
                   </text>
                   <path
+                    className="diagram-stage"
+                    data-step="2"
                     d="M196 143H231M347 88L283 135M347 88L409 135M283 151L254 191M283 151L312 191M409 151L378 191M409 151L438 191"
                     opacity=".3"
                   />
-                  <g className="diagram-stage" style={stage(2)}>
+                  <g className="diagram-stage" data-step="2" style={stage(2)}>
                     {[
                       [347, 77],
                       [283, 143],
@@ -246,27 +294,43 @@ export function ProjectVisual({ kind, large = false }: { kind: Project["kind"]; 
                       [378, 203],
                       [438, 203],
                     ].map(([x, y]) => (
-                      <circle key={`${x}-${y}`} cx={x} cy={y} r="9" fill="#0d1924" />
+                      <circle
+                        key={`${x}-${y}`}
+                        cx={x}
+                        cy={y}
+                        r="9"
+                        fill="#0d1924"
+                        data-alternative={x === 254 || x >= 378}
+                      />
                     ))}
                   </g>
-                  <g className="diagram-stage" style={stage(3)}>
-                    <text x="244" y="236">
+                  <g className="diagram-stage" data-step="3" style={stage(3)}>
+                    <text x="319" y="61">
+                      MAX +2
+                    </text>
+                    <text x="243" y="167">
+                      MIN +2
+                    </text>
+                    <text x="384" y="167">
+                      MIN −1
+                    </text>
+                    <text x="244" y="236" data-alternative="true">
                       +4
                     </text>
                     <text x="302" y="236">
                       +2
                     </text>
-                    <text x="368" y="236">
+                    <text x="368" y="236" data-alternative="true">
                       −1
                     </text>
-                    <text x="428" y="236">
+                    <text x="428" y="236" data-alternative="true">
                       +1
                     </text>
                   </g>
-                  <g className="diagram-stage" style={stage(4)}>
-                    <path d="M347 88L283 135M283 151L254 191" strokeWidth="1.5" />
+                  <g className="diagram-stage" data-step="5" style={stage(5)}>
+                    <path d="M347 88L283 135M283 151L312 191" strokeWidth="1.5" />
                     <text x="268" y="112">
-                      SELECT
+                      BEST MOVE
                     </text>
                   </g>
                   <text className="diagram-subtext" x="261" y="254">

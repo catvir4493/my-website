@@ -68,6 +68,7 @@ export function LabWorkbench() {
             id={`tab-${id}`}
             role="tab"
             data-cursor-glow
+            data-system-state={tab === id ? "ACTIVE" : "IDLE"}
             aria-selected={tab === id}
             aria-controls={`experiment-${id}`}
             tabIndex={tab === id ? 0 : -1}

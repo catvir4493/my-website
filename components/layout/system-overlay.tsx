@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Terminal } from "lucide-react";
 import { OPEN_PALETTE, OPEN_TERMINAL } from "@/lib/events";
 import { useMotionPreferences } from "@/components/ui/motion-provider";
@@ -28,7 +29,8 @@ export function SystemOverlay() {
   const [boot, setBoot] = useState(false);
   const [matrix, setMatrix] = useState(false);
   const [debug, setDebug] = useState(false);
-  const { lite, paused, setCommandMode } = useMotionPreferences();
+  const { lite, paused, setCommandMode, setShellMode } = useMotionPreferences();
+  const pathname = usePathname();
   const close = useCallback(() => setPanel(null), []);
   const terminal = useCallback(() => setPanel("terminal"), []);
   const palette = useCallback(() => setPanel("palette"), []);
@@ -43,6 +45,7 @@ export function SystemOverlay() {
     let frame = 0;
     try {
       if (
+        pathname === "/" &&
         !sessionStorage.getItem("marcell:booted") &&
         !window.matchMedia("(prefers-reduced-motion: reduce)").matches
       )
@@ -52,7 +55,7 @@ export function SystemOverlay() {
       "\n  M   M  AAAAA  RRRR   CCCC  EEEEE  L     L\n  MM MM  A   A  R   R  C     E      L     L\n  M M M  AAAAA  RRRR   C     EEEE   L     L\n  M   M  A   A  R  R   C     E      L     L\n  M   M  A   A  R   R  CCCC  EEEEE  LLLLL LLLLL\n\nWelcome to Marcell.OS\nIf you're reading this, we should probably build something together.",
     );
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [pathname]);
   useEffect(() => {
     let matched = 0;
     function keydown(event: KeyboardEvent) {
@@ -89,20 +92,24 @@ export function SystemOverlay() {
   }, [matrix, stopMatrix]);
   useEffect(() => {
     setCommandMode(panel === "palette");
-    return () => setCommandMode(false);
-  }, [panel, setCommandMode]);
+    setShellMode(panel === "terminal");
+    return () => {
+      setCommandMode(false);
+      setShellMode(false);
+    };
+  }, [panel, setCommandMode, setShellMode]);
   useEffect(() => {
     const elements = [
       ...document.querySelectorAll<HTMLElement>("header.status-bar, main, footer.footer"),
     ];
     elements.forEach((element) => {
-      element.inert = !!panel || boot;
+      element.inert = !!panel;
     });
     return () =>
       elements.forEach((element) => {
         element.inert = false;
       });
-  }, [panel, boot]);
+  }, [panel]);
   return (
     <>
       <Cursor />

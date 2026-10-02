@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
 
 const baseURL = process.argv[2] || "http://localhost:3000";
-const output = "artifacts/v1.2";
+const output = process.argv[3] || "artifacts/v1.2";
 mkdirSync(output, { recursive: true });
 const edge = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
 const browser = await chromium.launch({
@@ -141,16 +141,25 @@ if (existsSync(webkit.executablePath())) {
       );
     });
     for (const route of routes) {
-      // Settle framework prefetch before replacing the entire document. WebKit reports
-      // interrupted prefetch requests as access-control errors during rapid page.goto.
-      await page.goto(new URL(route, baseURL).href, { waitUntil: "networkidle" });
+      // Follow the real navigation path. Whole-document replacement can abort
+      // queued RSC prefetches in WebKit even after its network-idle notification.
+      if (route === "/") await page.goto(baseURL, { waitUntil: "networkidle" });
+      else {
+        if (!(await page.locator(`a[href="${route}"]:visible`).count()))
+          await page.getByRole("button", { name: "Open navigation" }).click();
+        await page.locator(`a[href="${route}"]:visible`).first().click();
+        await page.waitForURL(new URL(route, baseURL).href);
+        await page.waitForLoadState("networkidle");
+      }
       assert.equal(await page.locator("h1").count(), 1);
       assert.equal(
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         true,
       );
     }
-    await page.goto(baseURL, { waitUntil: "networkidle" });
+    await page.getByRole("link", { name: "Marcell.OS home" }).click();
+    await page.waitForURL(new URL("/", baseURL).href);
+    await page.waitForLoadState("networkidle");
     await page.waitForFunction(() =>
       /\d{2}:\d{2}:\d{2}/.test(document.querySelector(".header-time")?.textContent || ""),
     );

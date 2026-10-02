@@ -15,9 +15,10 @@ test.beforeEach(async ({ page }, testInfo) => {
 
 test("first-visit boot is brief, skippable, and session-scoped", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("dialog", { name: "MARCELL.OS" })).toBeVisible();
-  await page.getByRole("button", { name: "Skip boot sequence" }).click();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator(".hero-startup")).toBeVisible();
+  await expect(page.locator("main")).not.toHaveAttribute("inert", "");
+  await page.getByRole("button", { name: /skip boot sequence/i }).click();
+  await expect(page.locator(".hero-startup")).toHaveCount(0);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
   await page.reload();
   await expect(page.locator(".header-time")).not.toContainText("--:--:--");

@@ -4,9 +4,16 @@ import { useMotionPreferences } from "@/components/ui/motion-provider";
 
 // Event-driven, one frame per pointer update, with no React renders or idle loop.
 export function CursorGlow() {
-  const { quality, dormant, commandMode } = useMotionPreferences();
+  const { quality, dormant, commandMode, shellMode, quiet } = useMotionPreferences();
   useEffect(() => {
-    if (quality === "low" || dormant || commandMode || !matchMedia("(pointer: fine)").matches)
+    if (
+      quality === "low" ||
+      dormant ||
+      quiet ||
+      commandMode ||
+      shellMode ||
+      !matchMedia("(pointer: fine)").matches
+    )
       return;
     let frame = 0;
     let previous: HTMLElement | null = null;
@@ -42,6 +49,6 @@ export function CursorGlow() {
       document.removeEventListener("pointerleave", clear);
       window.removeEventListener("scroll", clear);
     };
-  }, [quality, dormant, commandMode]);
+  }, [quality, dormant, quiet, commandMode, shellMode]);
   return null;
 }

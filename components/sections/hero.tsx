@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
 import {
   ArrowDown,
   ArrowUpRight,
@@ -17,6 +16,7 @@ import { projects } from "@/data/projects";
 import { system } from "@/data/system";
 import { ProjectLink } from "@/components/visual/route-transition";
 import { projectAmbient } from "@/components/visual/project-ambient";
+import { useProjectFocus } from "@/components/visual/project-focus";
 
 const destinations = [
   {
@@ -49,7 +49,7 @@ const destinations = [
   },
 ];
 export function Hero() {
-  const [signal, setSignal] = useState<string | null>(null);
+  const { signal, setSignal, clearSignal } = useProjectFocus();
   const active = projects.find((project) => project.slug === signal);
   return (
     <section id="home" className="hero">
@@ -81,10 +81,10 @@ export function Hero() {
             </p>
           </div>
           <div className="hero-actions">
-            <Link className="button primary" href="/projects">
+            <Link className="button primary" href="/projects" data-magnetic>
               Explore my work <ArrowUpRight size={17} />
             </Link>
-            <Link className="button secondary" href="/lab">
+            <Link className="button secondary" href="/lab" data-magnetic>
               <FlaskConical size={16} /> Enter the lab
             </Link>
           </div>
@@ -101,6 +101,7 @@ export function Hero() {
         <div
           className="hero-visual"
           data-cursor-glow
+          data-cursor="INSPECT"
           style={active ? projectAmbient(active) : undefined}
         >
           <div className="core-environment" aria-hidden="true">
@@ -122,10 +123,10 @@ export function Hero() {
                 data-active={signal === project.slug}
                 key={project.slug}
                 style={projectAmbient(project)}
-                onMouseEnter={() => setSignal(project.slug)}
-                onMouseLeave={() => setSignal(null)}
+                onPointerEnter={() => setSignal(project.slug)}
+                onPointerLeave={() => clearSignal(project.slug)}
                 onFocus={() => setSignal(project.slug)}
-                onBlur={() => setSignal(null)}
+                onBlur={() => clearSignal(project.slug)}
               >
                 <i />
                 <span className="mono">

@@ -75,6 +75,7 @@ export default function CommandPalette({
       <div
         ref={dialog}
         className="command-palette"
+        data-system-state="FOCUS"
         role="dialog"
         aria-modal="true"
         aria-labelledby="palette-title"

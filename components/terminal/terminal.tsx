@@ -75,6 +75,7 @@ export default function Terminal({
       <div
         ref={dialog}
         className="terminal-window"
+        data-system-state="FOCUS"
         role="dialog"
         aria-modal="true"
         aria-labelledby="terminal-title"

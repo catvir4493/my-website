@@ -10,6 +10,7 @@ import { getContacts } from "@/data/contact";
 import { ContactProvider } from "@/components/ui/contact-provider";
 import { VisualEnvironment } from "@/components/visual/environment";
 import { RouteTransition } from "@/components/visual/route-transition";
+import { ProjectFocusProvider } from "@/components/visual/project-focus";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -41,18 +42,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ContactProvider contacts={getContacts()}>
           <MotionProvider>
-            <RouteTransition>
-              <a href="#main" className="skip-link">
-                Skip to content
-              </a>
-              <VisualEnvironment />
-              <Header />
-              <main id="main" tabIndex={-1}>
-                {children}
-              </main>
-              <Footer />
-              <SystemOverlay />
-            </RouteTransition>
+            <ProjectFocusProvider>
+              <RouteTransition>
+                <a href="#main" className="skip-link">
+                  Skip to content
+                </a>
+                <VisualEnvironment />
+                <Header />
+                <main id="main" tabIndex={-1}>
+                  {children}
+                </main>
+                <Footer />
+                <SystemOverlay />
+              </RouteTransition>
+            </ProjectFocusProvider>
           </MotionProvider>
         </ContactProvider>
       </body>

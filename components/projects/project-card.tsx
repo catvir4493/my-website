@@ -4,8 +4,11 @@ import type { Project } from "@/data/projects";
 import { ProjectVisual } from "./project-visual";
 import { ProjectLink } from "@/components/visual/route-transition";
 import { projectAmbient } from "@/components/visual/project-ambient";
+import { useProjectFocus } from "@/components/visual/project-focus";
+import { ProjectIdentity } from "@/components/visual/project-identity";
 
 export function ProjectCard({ project }: { project: Project }) {
+  const { signal, setSignal, clearSignal } = useProjectFocus();
   return (
     <ProjectLink
       project={project}
@@ -14,9 +17,17 @@ export function ProjectCard({ project }: { project: Project }) {
       data-project={project.slug}
       data-cursor-glow
       style={projectAmbient(project)}
+      data-emphasis={signal ? (signal === project.slug ? "focus" : "quiet") : "idle"}
+      onPointerEnter={() => setSignal(project.slug)}
+      onPointerLeave={() => clearSignal(project.slug)}
+      onFocus={() => setSignal(project.slug)}
+      onBlur={() => clearSignal(project.slug)}
     >
+      <span className="project-spatial-number" aria-hidden="true">
+        {project.id.padStart(3, "0")}
+      </span>
       <div className="project-card-top mono">
-        <span>PROJECT_{project.id}</span>
+        <ProjectIdentity id={project.id} />
         <span>{project.featured ? "FLAGSHIP" : "ENGINEERING"}</span>
       </div>
       <ProjectVisual kind={project.kind} />

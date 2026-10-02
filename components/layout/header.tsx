@@ -18,7 +18,7 @@ export function Header() {
   const [time, setTime] = useState("--:--:--");
   const [menu, setMenu] = useState(false);
   const pathname = usePathname();
-  const { dormant } = useMotionPreferences();
+  const { dormant, shellMode, commandMode } = useMotionPreferences();
   useEffect(() => {
     if (dormant) return;
     const update = () =>
@@ -63,7 +63,7 @@ export function Header() {
       </nav>
       <div className="header-status">
         <span className="online">
-          <i /> SYSTEM ONLINE
+          <i /> {shellMode ? "SYSTEM SHELL ACTIVE" : commandMode ? "COMMAND MODE" : "SYSTEM ONLINE"}
         </span>
         <span className="header-time">
           {time}

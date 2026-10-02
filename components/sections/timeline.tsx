@@ -18,7 +18,7 @@ export function TimelineSection() {
           {systemLog.map((entry) => (
             <LogEntry key={entry.date} {...entry} />
           ))}
-          <Link href="/lab" className="lab-invitation">
+          <Link href="/lab" className="lab-invitation" data-magnetic>
             <FlaskConical size={28} strokeWidth={1} />
             <span className="mono">NEXT / EXPERIMENT</span>
             <h3>What happens if…</h3>

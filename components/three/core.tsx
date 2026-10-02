@@ -31,7 +31,7 @@ class CoreBoundary extends Component<{ children: ReactNode }, { failed: boolean 
   }
 }
 export function Core({ signal, color }: { signal: string | null; color: string }) {
-  const { dormant, lite, quality, commandMode } = useMotionPreferences();
+  const { dormant, lite, quality, commandMode, shellMode, quiet } = useMotionPreferences();
   const [visible, setVisible] = useState(true);
   const [inView, setInView] = useState(true);
   const container = useRef<HTMLDivElement>(null);
@@ -52,6 +52,7 @@ export function Core({ signal, color }: { signal: string | null; color: string }
       ref={container}
       className="core-canvas"
       data-signal={signal || "idle"}
+      data-system-state={commandMode || shellMode ? "FOCUS" : signal ? "ACTIVE" : "IDLE"}
       style={{ "--core-color": color } as React.CSSProperties}
       role="img"
       aria-label="Floating interactive processor surrounded by orbital data paths"
@@ -61,11 +62,11 @@ export function Core({ signal, color }: { signal: string | null; color: string }
           <CoreFallback />
         ) : (
           <CoreScene
-            paused={dormant || !visible || !inView}
+            paused={dormant || quiet || !visible || !inView}
             signal={signal}
             color={color}
             quality={quality}
-            commandMode={commandMode}
+            commandMode={commandMode || shellMode}
           />
         )}
       </CoreBoundary>

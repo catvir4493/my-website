@@ -263,7 +263,7 @@
 }
 .palette-backdrop {
   background: #03070dd9;
-  backdrop-filter: blur(8px);
+  backdrop-filter: none;
 }
 .palette-label {
   display: flex;

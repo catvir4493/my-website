@@ -244,9 +244,12 @@ function ComputeCore({
 }) {
   const group = useRef<Group>(null);
   const rings = useRef<Group>(null);
+  const processing = useRef<Group>(null);
   const glow = useRef<MeshStandardMaterial>(null);
   const pulses = useRef<(Mesh | null)[]>([]);
   const clickUntil = useRef(0);
+  const activeTime = useRef(0);
+  const activity = useRef(Array.from({ length: 3 }, () => ({ next: 0, start: -10 })));
   const [active, setActive] = useState(false);
   const paths = useMemo(
     () =>
@@ -284,9 +287,11 @@ function ComputeCore({
     }
     return positions;
   }, [quality]);
-  useFrame(({ clock, pointer }, delta) => {
+  useFrame(({ pointer }, delta) => {
     if (!group.current || paused) return;
-    const t = clock.elapsedTime;
+    // Advance only while rendering. Resuming a quiet/hidden scene cannot jump its timeline.
+    activeTime.current += Math.min(delta, 0.1);
+    const t = activeTime.current;
     const speed = commandMode ? 0.25 : 1;
     const clicked = performance.now() < clickUntil.current;
     group.current.rotation.y +=
@@ -296,14 +301,22 @@ function ComputeCore({
     group.current.position.y = Math.sin(t * 0.35) * 0.035;
     if (rings.current)
       rings.current.rotation.z += Math.min(delta, 0.1) * (energized ? 0.035 : 0.012) * speed;
+    if (processing.current) processing.current.rotation.z = Math.sin(t * 0.045) * 0.012;
+    const fluctuation = Math.sin(t * 0.31) * 0.012 + Math.sin(t * 0.173 + 1.7) * 0.008;
     if (glow.current)
       glow.current.emissiveIntensity +=
-        ((clicked ? 1.1 : energized ? 0.65 : 0.22) - glow.current.emissiveIntensity) *
+        ((clicked ? 1.1 : energized ? 0.65 : 0.22 + fluctuation) - glow.current.emissiveIntensity) *
         Math.min(delta * 4, 1);
     pulses.current.forEach((pulse, index) => {
       if (!pulse) return;
-      const progress = ((t * speed + index * 2.6) % 9) / (energized || clicked ? 2.8 : 2);
-      pulse.visible = progress < 1;
+      const schedule = activity.current[index];
+      if (!schedule.next) schedule.next = t + 2 + Math.random() * 5;
+      if (t >= schedule.next && !commandMode) {
+        schedule.start = t;
+        schedule.next = t + 2 + Math.random() * 5;
+      }
+      const progress = (t - schedule.start) / (energized || clicked ? 1.4 : 1.8);
+      pulse.visible = progress >= 0 && progress < 1 && !commandMode;
       if (!pulse.visible) return;
       const points = paths[index];
       const segment = Math.min(2, Math.floor(progress * 3));
@@ -349,8 +362,10 @@ function ComputeCore({
           <boxGeometry args={[1.89, 1.89, 0.08]} />
           <meshStandardMaterial color="#0d191f" metalness={0.4} roughness={0.8} />
         </mesh>
-        <ProcessingTiles alternate={false} />
-        <ProcessingTiles alternate />
+        <group ref={processing}>
+          <ProcessingTiles alternate={false} />
+          <ProcessingTiles alternate />
+        </group>
         <mesh position={[0, 0, 0.44]}>
           <boxGeometry args={[0.83, 0.8, 0.075]} />
           <meshStandardMaterial color="#15232b" metalness={0.6} roughness={0.5} />

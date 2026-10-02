@@ -2,7 +2,7 @@ import { chromium } from "@playwright/test";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import assert from "node:assert/strict";
 
-const output = "artifacts/v1.2";
+const output = process.argv[2] || "artifacts/v1.2";
 mkdirSync(output, { recursive: true });
 const edge = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
 const browser = await chromium.launch({
@@ -122,6 +122,18 @@ try {
   await page.locator(".core-canvas canvas").waitFor();
   await page.evaluate(() => scrollTo({ top: 1200, behavior: "smooth" }));
   samples.push(await sample("smooth scroll through content"));
+  await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
+  await page.mouse.move(10, 10);
+  await page.waitForFunction(
+    () => document.querySelector(".system-root")?.dataset.quiet === "true",
+    null,
+    { timeout: 15000 },
+  );
+  samples.push(await sample("quiet mode / untouched system"));
+  await page.mouse.move(20, 20);
+  await page.waitForFunction(
+    () => document.querySelector(".system-root")?.dataset.quiet === "false",
+  );
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("http://localhost:3000");
   await page.locator(".core-fallback").waitFor();
@@ -136,7 +148,7 @@ try {
     sharedDiagramTransitionsObserved: diagramTransitions,
   };
   writeFileSync(`${output}/runtime-performance.json`, JSON.stringify(result, null, 2));
-  for (const item of samples.filter((item) => /offscreen|paused|hidden/.test(item.label)))
+  for (const item of samples.filter((item) => /offscreen|paused|hidden|quiet/.test(item.label)))
     assert.equal(item.coreFramesPerSecond, 0, item.label);
   assert.ok(samples[0].coreFramesPerSecond <= 35, "core cadence remains capped");
   console.log(JSON.stringify(result, null, 2));

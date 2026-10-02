@@ -32,6 +32,7 @@ export function ContactSection() {
               target={primary.name === "Email" ? undefined : "_blank"}
               rel="noopener noreferrer"
               className="contact-orb"
+              data-magnetic
               aria-label={`Connect via ${primary.name}`}
             >
               <ArrowUpRight size={46} strokeWidth={1} />

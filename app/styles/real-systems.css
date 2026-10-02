@@ -115,8 +115,7 @@
   line-height: 1.7;
 }
 .system-architecture[data-motion="true"] .architecture-pipeline li {
-  animation: pipeline-signal 8s linear infinite;
-  animation-delay: calc(var(--stage) * 1s);
+  animation: none;
 }
 @keyframes pipeline-signal {
   0%,

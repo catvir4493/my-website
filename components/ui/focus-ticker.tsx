@@ -10,12 +10,12 @@ const modes = [
 ];
 export function FocusTicker() {
   const [index, setIndex] = useState(0);
-  const { dormant, lite } = useMotionPreferences();
+  const { dormant, lite, quiet, commandMode, shellMode } = useMotionPreferences();
   useEffect(() => {
-    if (dormant || lite) return;
+    if (dormant || lite || quiet || commandMode || shellMode) return;
     const timer = setInterval(() => setIndex((value) => (value + 1) % modes.length), 3200);
     return () => clearInterval(timer);
-  }, [dormant, lite]);
+  }, [dormant, lite, quiet, commandMode, shellMode]);
   return (
     <span className="focus-ticker">
       <span className="sr-only">Exploring computer engineering, systems, software, and AI</span>

@@ -9,6 +9,8 @@ import { ProjectVisual } from "@/components/projects/project-visual";
 import { Architecture } from "@/components/projects/architecture";
 import { projectAmbient } from "@/components/visual/project-ambient";
 import { ProjectLink } from "@/components/visual/route-transition";
+import { ProjectIdentity } from "@/components/visual/project-identity";
+import { VisionStory } from "@/components/projects/vision-story";
 type Props = { params: Promise<{ slug: string }> };
 export function generateStaticParams() {
   return projects.map((project) => ({ slug: project.slug }));
@@ -64,7 +66,7 @@ export default async function ProjectPage({ params }: Props) {
       <div className="project-detail-top">
         <div>
           <p className="eyebrow">
-            PROJECT_{project.id} / {project.category}
+            <ProjectIdentity id={project.id} /> / {project.category}
             {project.featured ? " / FLAGSHIP" : ""}
           </p>
           <h1>{project.name}</h1>
@@ -84,12 +86,12 @@ export default async function ProjectPage({ params }: Props) {
       </div>
       <div className="project-detail-grid">
         <div className="project-detail-copy">
-          <section>
+          <section data-vision-phase={project.kind === "vision" ? "0" : undefined}>
             <p className="eyebrow">01 / PROBLEM</p>
             <h2>Beyond the surface.</h2>
             <p>{project.problem}</p>
           </section>
-          <section>
+          <section data-vision-phase={project.kind === "vision" ? "1" : undefined}>
             <p className="eyebrow">02 / SYSTEM IDEA</p>
             <h2>From input to intent.</h2>
             <p>{project.idea}</p>
@@ -99,12 +101,12 @@ export default async function ProjectPage({ params }: Props) {
               ))}
             </div>
           </section>
-          <section>
+          <section data-vision-phase={project.kind === "vision" ? "2" : undefined}>
             <p className="eyebrow">03 / ARCHITECTURE</p>
             <h2>The system, connected.</h2>
             <Architecture project={project} />
           </section>
-          <section>
+          <section data-vision-phase={project.kind === "vision" ? "3" : undefined}>
             <p className="eyebrow">04 / ENGINEERING CHALLENGES</p>
             <h2>The decisions that matter.</h2>
             <div className="case-challenges">
@@ -170,6 +172,7 @@ export default async function ProjectPage({ params }: Props) {
             <span>MODULE INFORMATION</span>
             <span>/{project.id}</span>
           </div>
+          {project.kind === "vision" && <VisionStory />}
           <dl>
             <div>
               <dt>STATUS</dt>
