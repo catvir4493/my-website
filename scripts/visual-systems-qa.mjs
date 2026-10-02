@@ -34,6 +34,13 @@ try {
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
+    page.on("console", (message) => {
+      if (
+        message.type() === "error" &&
+        /THREE.WebGLProgram|GL_INVALID|VALIDATE_STATUS|shader error/i.test(message.text())
+      )
+        errors.push(message.text());
+    });
     for (const route of routes) {
       const response = await page.goto(new URL(route, baseURL).href);
       await page.locator("h1").waitFor();
@@ -121,12 +128,18 @@ let webkitResult = {
 if (existsSync(webkit.executablePath())) {
   const safari = await webkit.launch();
   const errors = [];
+  const materialModes = [];
+  let materialScreenshots = 0;
   for (const viewport of [
     { width: 1440, height: 900 },
     { width: 390, height: 844 },
   ]) {
     const context = await safari.newContext({ viewport });
-    await context.addInitScript(() => sessionStorage.setItem("marcell:booted", "1"));
+    await context.addInitScript(() => {
+      sessionStorage.setItem("marcell:booted", "1");
+      // Exercise the full material branch on desktop regardless of the CI host's CPU hint.
+      Object.defineProperty(navigator, "hardwareConcurrency", { get: () => 16 });
+    });
     const page = await context.newPage();
     page.on("pageerror", (error) => {
       errors.push(error.message);
@@ -140,6 +153,13 @@ if (existsSync(webkit.executablePath())) {
         }),
       );
     });
+    page.on("console", (message) => {
+      if (
+        message.type() === "error" &&
+        /THREE.WebGLProgram|GL_INVALID|VALIDATE_STATUS|shader error/i.test(message.text())
+      )
+        errors.push(message.text());
+    });
     for (const route of routes) {
       // Follow the real navigation path. Whole-document replacement can abort
       // queued RSC prefetches in WebKit even after its network-idle notification.
@@ -152,6 +172,22 @@ if (existsSync(webkit.executablePath())) {
         await page.waitForLoadState("networkidle");
       }
       assert.equal(await page.locator("h1").count(), 1);
+      if (route === "/") {
+        await page
+          .locator(viewport.width > 760 ? ".core-canvas canvas" : ".core-fallback")
+          .waitFor();
+        materialModes.push({
+          viewport: viewport.width,
+          quality: await page.locator(".system-root").getAttribute("data-quality"),
+        });
+      }
+      if (route.startsWith("/projects/")) {
+        await page.evaluate(() => document.fonts.ready);
+        await page.screenshot({
+          path: `${output}/webkit-${viewport.width}-${route.slice(1).replaceAll("/", "-")}.png`,
+        });
+        materialScreenshots++;
+      }
       assert.equal(
         await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         true,
@@ -174,7 +210,14 @@ if (existsSync(webkit.executablePath())) {
     await page.locator("h1").filter({ hasText: "Vision Navigation" }).waitFor();
     await context.close();
   }
-  webkitResult = { tested: true, viewports: [1440, 390], routes: routes.length * 2, errors };
+  webkitResult = {
+    tested: true,
+    viewports: [1440, 390],
+    routes: routes.length * 2,
+    errors,
+    materialModes,
+    materialScreenshots,
+  };
   await safari.close();
 }
 writeFileSync(

@@ -1,67 +1,87 @@
 "use client";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   CanvasTexture,
+  ACESFilmicToneMapping,
+  SRGBColorSpace,
   Color,
   Object3D,
   Vector3,
   type Group,
   type Mesh,
   type InstancedMesh,
-  type MeshStandardMaterial,
+  type DirectionalLight,
+  type BufferAttribute,
 } from "three";
 import type { VisualQuality } from "@/lib/visual-quality";
-import { coreGlassFragment, coreGlassVertex } from "@/lib/core-material";
+import { createCoreMaterials, type CoreMaterials } from "@/lib/materials/library";
+import { AcrylicSupports, BeveledPlate, PCBContacts } from "./core-surfaces";
+import { MaterialRenderer } from "./material-renderer";
+import { CoreFallback } from "./core-fallback";
 
-function createLabel() {
+function createLabel(layer: "pcb" | "etch") {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
   canvas.height = 512;
   const ctx = canvas.getContext("2d")!;
   ctx.clearRect(0, 0, 512, 512);
-  ctx.strokeStyle = "#304149";
-  ctx.lineWidth = 3;
-  ctx.strokeRect(25, 25, 462, 462);
-  ctx.strokeStyle = "#c5e6eb";
-  ctx.lineWidth = 12;
-  ctx.lineJoin = "miter";
-  ctx.beginPath();
-  ctx.moveTo(204, 236);
-  ctx.lineTo(204, 179);
-  ctx.lineTo(256, 224);
-  ctx.lineTo(308, 179);
-  ctx.lineTo(308, 236);
-  ctx.stroke();
-  ctx.fillStyle = "#d7f6fa";
-  ctx.textAlign = "center";
-  ctx.font = "22px monospace";
-  ctx.fillText("MARCELL.OS", 256, 288);
-  ctx.fillStyle = "#6f929d";
-  ctx.font = "14px monospace";
-  ctx.fillText("COMPUTE CORE / 01", 256, 323);
-  ctx.fillText("INPUT → PROCESS → OUTPUT", 256, 459);
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = "#668c96";
-  for (let side = 0; side < 4; side++) {
-    ctx.save();
-    ctx.translate(256, 256);
-    ctx.rotate((side * Math.PI) / 2);
-    for (let i = 0; i < 7; i++) {
-      ctx.beginPath();
-      ctx.moveTo(-150 + i * 48, -225);
-      ctx.lineTo(-150 + i * 48, -181);
-      ctx.lineTo(-132 + i * 48, -163);
-      ctx.stroke();
+  if (layer === "etch") {
+    ctx.strokeStyle = "#c5e6eb";
+    ctx.lineWidth = 12;
+    ctx.lineJoin = "miter";
+    ctx.beginPath();
+    ctx.moveTo(204, 236);
+    ctx.lineTo(204, 179);
+    ctx.lineTo(256, 224);
+    ctx.lineTo(308, 179);
+    ctx.lineTo(308, 236);
+    ctx.stroke();
+    ctx.fillStyle = "#d7f6fa";
+    ctx.textAlign = "center";
+    ctx.font = "22px monospace";
+    ctx.fillText("MARCELL.OS", 256, 288);
+    ctx.fillStyle = "#6f929d";
+    ctx.font = "14px monospace";
+    ctx.fillText("COMPUTE CORE / 01", 256, 323);
+  } else {
+    ctx.strokeStyle = "#304149";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(25, 25, 462, 462);
+    ctx.fillStyle = "#6f929d";
+    ctx.textAlign = "center";
+    ctx.font = "14px monospace";
+    ctx.fillText("INPUT → PROCESS → OUTPUT", 256, 459);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "#496168";
+    for (let side = 0; side < 4; side++) {
+      ctx.save();
+      ctx.translate(256, 256);
+      ctx.rotate((side * Math.PI) / 2);
+      for (let i = 0; i < 7; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-150 + i * 48, -225);
+        ctx.lineTo(-150 + i * 48, -181);
+        ctx.lineTo(-132 + i * 48, -163);
+        ctx.stroke();
+      }
+      ctx.restore();
     }
-    ctx.restore();
+    ctx.fillStyle = "#bdff85";
+    ctx.fillRect(50, 436, 37, 4);
+    ctx.fillStyle = "#718184";
+    ctx.font = "10px monospace";
+    ctx.textAlign = "left";
+    ctx.fillText("A14", 63, 105);
+    ctx.fillText("P03", 404, 383);
+    ctx.fillText("DATA_BUS", 63, 391);
   }
-  ctx.fillStyle = "#bdff85";
-  ctx.fillRect(50, 436, 37, 4);
-  return new CanvasTexture(canvas);
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  return texture;
 }
 
-function Pins() {
+function Pins({ materials }: { materials: CoreMaterials }) {
   const ref = useRef<InstancedMesh>(null);
   useLayoutEffect(() => {
     const dummy = new Object3D();
@@ -84,12 +104,18 @@ function Pins() {
   return (
     <instancedMesh ref={ref} args={[undefined, undefined, 72]}>
       <boxGeometry args={[0.045, 0.23, 0.065]} />
-      <meshStandardMaterial color="#879da3" metalness={0.72} roughness={0.48} />
+      <primitive object={materials.contacts} attach="material" dispose={null} />
     </instancedMesh>
   );
 }
 
-function ProcessingTiles({ alternate }: { alternate: boolean }) {
+function ProcessingTiles({
+  alternate,
+  materials,
+}: {
+  alternate: boolean;
+  materials: CoreMaterials;
+}) {
   const ref = useRef<InstancedMesh>(null);
   useLayoutEffect(() => {
     const dummy = new Object3D();
@@ -99,7 +125,7 @@ function ProcessingTiles({ alternate }: { alternate: boolean }) {
       dummy.position.set(((index % 4) - 1.5) * 0.35, (Math.floor(index / 4) - 1.5) * 0.35, 0.31);
       dummy.updateMatrix();
       ref.current?.setMatrixAt(instance, dummy.matrix);
-      ref.current?.setColorAt(instance, color.set(index % 3 === 0 ? "#34505a" : "#1e303b"));
+      ref.current?.setColorAt(instance, color.set(index % 3 === 0 ? "#84939b" : "#61747e"));
     }
     if (ref.current) {
       ref.current.instanceMatrix.needsUpdate = true;
@@ -109,7 +135,11 @@ function ProcessingTiles({ alternate }: { alternate: boolean }) {
   return (
     <instancedMesh ref={ref} args={[undefined, undefined, 8]}>
       <boxGeometry args={[0.32, 0.32, 0.05]} />
-      <meshStandardMaterial metalness={0.55} roughness={alternate ? 0.64 : 0.43} />
+      <primitive
+        object={alternate ? materials.graphite : materials.ceramic}
+        attach="material"
+        dispose={null}
+      />
     </instancedMesh>
   );
 }
@@ -245,11 +275,18 @@ function ComputeCore({
   const group = useRef<Group>(null);
   const rings = useRef<Group>(null);
   const processing = useRef<Group>(null);
-  const glow = useRef<MeshStandardMaterial>(null);
+  const keyLight = useRef<DirectionalLight>(null);
   const pulses = useRef<(Mesh | null)[]>([]);
   const clickUntil = useRef(0);
   const activeTime = useRef(0);
   const activity = useRef(Array.from({ length: 3 }, () => ({ next: 0, start: -10 })));
+  const lightSweep = useRef({ next: 0, start: -10 });
+  const materials = useMemo(() => createCoreMaterials(quality), [quality]);
+  const animatedMaterials = useRef<CoreMaterials | null>(null);
+  useLayoutEffect(() => {
+    animatedMaterials.current = materials;
+  }, [materials]);
+  useEffect(() => () => materials.dispose(), [materials]);
   const [active, setActive] = useState(false);
   const paths = useMemo(
     () =>
@@ -258,21 +295,31 @@ function ComputeCore({
         : pulsePaths,
     [signal],
   );
-  const tracePositions = useMemo(
-    () =>
-      new Float32Array(
-        paths.flatMap((points) =>
-          points
-            .slice(0, -1)
-            .flatMap((point, index) => [...point.toArray(), ...points[index + 1].toArray()]),
-        ),
+  const tracePositions = useMemo(() => new Float32Array(54), []);
+  const traceAttribute = useRef<BufferAttribute>(null);
+  useLayoutEffect(() => {
+    if (!traceAttribute.current) return;
+    traceAttribute.current.array.set(
+      paths.flatMap((points) =>
+        points
+          .slice(0, -1)
+          .flatMap((point, index) => [...point.toArray(), ...points[index + 1].toArray()]),
       ),
-    [paths],
-  );
-  const label = useMemo(() => createLabel(), []);
+    );
+    traceAttribute.current.needsUpdate = true;
+  }, [paths]);
+  const label = useMemo(() => createLabel("pcb"), []);
+  const etching = useMemo(() => createLabel("etch"), []);
   useEffect(() => () => label.dispose(), [label]);
+  useEffect(() => () => etching.dispose(), [etching]);
+  useLayoutEffect(() => {
+    materials.marking.setValues({ map: label });
+    materials.etching.setValues({ map: etching });
+  }, [materials, label, etching]);
   const color = useMemo(() => new Color(tint), [tint]);
-  const glassUniforms = useMemo(() => ({ tint: { value: color } }), [color]);
+  useEffect(() => {
+    materials.trace.emissive.copy(color);
+  }, [materials, color]);
   const energized = active || !!signal;
   const particles = useMemo(() => {
     const count = quality === "high" ? 48 : 16;
@@ -288,7 +335,8 @@ function ComputeCore({
     return positions;
   }, [quality]);
   useFrame(({ pointer }, delta) => {
-    if (!group.current || paused) return;
+    const materials = animatedMaterials.current;
+    if (!group.current || !materials || paused) return;
     // Advance only while rendering. Resuming a quiet/hidden scene cannot jump its timeline.
     activeTime.current += Math.min(delta, 0.1);
     const t = activeTime.current;
@@ -303,10 +351,24 @@ function ComputeCore({
       rings.current.rotation.z += Math.min(delta, 0.1) * (energized ? 0.035 : 0.012) * speed;
     if (processing.current) processing.current.rotation.z = Math.sin(t * 0.045) * 0.012;
     const fluctuation = Math.sin(t * 0.31) * 0.012 + Math.sin(t * 0.173 + 1.7) * 0.008;
-    if (glow.current)
-      glow.current.emissiveIntensity +=
-        ((clicked ? 1.1 : energized ? 0.65 : 0.22 + fluctuation) - glow.current.emissiveIntensity) *
-        Math.min(delta * 4, 1);
+    materials.trace.emissiveIntensity +=
+      ((clicked ? 0.75 : energized ? 0.48 : 0.2 + fluctuation) -
+        materials.trace.emissiveIntensity) *
+      Math.min(delta * 4, 1);
+    if (!lightSweep.current.next) lightSweep.current.next = t + 8 + Math.random() * 12;
+    if (quality === "high" && !commandMode && t >= lightSweep.current.next) {
+      lightSweep.current.start = t;
+      lightSweep.current.next = t + 8 + Math.random() * 12;
+    }
+    const sweepProgress = (t - lightSweep.current.start) / 2.2;
+    materials.sweep.value =
+      quality === "high" && !commandMode && sweepProgress >= 0 && sweepProgress < 1
+        ? Math.sin(sweepProgress * Math.PI)
+        : 0;
+    if (keyLight.current) {
+      keyLight.current.position.x = 2.5 + pointer.x * 0.22 + materials.sweep.value * 0.28;
+      keyLight.current.position.y = 4 + pointer.y * 0.14;
+    }
     pulses.current.forEach((pulse, index) => {
       if (!pulse) return;
       const schedule = activity.current[index];
@@ -329,11 +391,11 @@ function ComputeCore({
         paused={paused}
         interval={commandMode ? 100 : quality === "high" && energized ? 33 : 50}
       />
-      <ambientLight intensity={0.8} />
-      <hemisphereLight args={["#aacbd7", "#142028", 1]} />
-      <directionalLight position={[2, 4, 5]} intensity={2.1} color="#d3e7ef" />
-      <pointLight position={[-3, 1, 3]} intensity={active || signal ? 6 : 4} color={color} />
-      <pointLight position={[3, -2, 1]} intensity={2.8} color="#8e83c9" />
+      <hemisphereLight args={["#adbcc8", "#182025", 0.8]} />
+      <directionalLight ref={keyLight} position={[2.5, 4, 5]} intensity={2.5} color="#cadfe4" />
+      <directionalLight position={[-4, -1, 3]} intensity={0.85} color="#a6b1c0" />
+      <directionalLight position={[3, -2, -1]} intensity={0.65} color="#9487b1" />
+      <pointLight position={[-2, 1, 2]} intensity={energized ? 1.4 : 0.85} color={color} />
       <group
         ref={group}
         rotation={[0.15, -0.34, -0.16]}
@@ -343,68 +405,60 @@ function ComputeCore({
           clickUntil.current = performance.now() + 450;
         }}
       >
-        <mesh>
-          <boxGeometry args={[2.2, 2.2, 0.22]} />
-          <meshStandardMaterial color="#34444b" metalness={0.72} roughness={0.48} />
-        </mesh>
+        <BeveledPlate width={2.2} height={2.2} depth={0.22} material={materials.metal} />
         <mesh position={[0, 0, 0.13]}>
           <boxGeometry args={[2.03, 2.03, 0.05]} />
-          <meshStandardMaterial
-            ref={glow}
-            color="#1e343c"
-            emissive={color}
-            emissiveIntensity={0.22}
-            metalness={0.5}
-            roughness={0.55}
-          />
+          <primitive object={materials.matte} attach="material" dispose={null} />
         </mesh>
         <mesh position={[0, 0, 0.23]}>
           <boxGeometry args={[1.89, 1.89, 0.08]} />
-          <meshStandardMaterial color="#0d191f" metalness={0.4} roughness={0.8} />
+          <primitive object={materials.pcb} attach="material" dispose={null} />
+        </mesh>
+        <mesh position={[0, 0, 0.275]}>
+          <planeGeometry args={[1.91, 1.91]} />
+          <primitive object={materials.contactShadow} attach="material" dispose={null} />
         </mesh>
         <group ref={processing}>
-          <ProcessingTiles alternate={false} />
-          <ProcessingTiles alternate />
+          <ProcessingTiles alternate={false} materials={materials} />
+          <ProcessingTiles alternate materials={materials} />
         </group>
-        <mesh position={[0, 0, 0.44]}>
-          <boxGeometry args={[0.83, 0.8, 0.075]} />
-          <meshStandardMaterial color="#15232b" metalness={0.6} roughness={0.5} />
+        <mesh position={[0, 0, 0.35]}>
+          <planeGeometry args={[0.94, 0.91]} />
+          <primitive object={materials.contactShadow} attach="material" dispose={null} />
+        </mesh>
+        <BeveledPlate
+          width={0.83}
+          height={0.8}
+          depth={0.075}
+          z={0.44}
+          material={materials.ceramic}
+        />
+        <PCBContacts materials={materials} />
+        <AcrylicSupports materials={materials} />
+        <mesh position={[0, 0, 0.395]} rotation={[0, 0, Math.PI / 4]}>
+          <ringGeometry args={[0.61, 0.618, 4]} />
+          <primitive object={materials.trace} attach="material" dispose={null} />
         </mesh>
         <mesh position={[0, 0, 0.53]}>
           <boxGeometry args={[1.96, 1.96, 0.06]} />
-          {quality === "high" ? (
-            <shaderMaterial
-              vertexShader={coreGlassVertex}
-              fragmentShader={coreGlassFragment}
-              uniforms={glassUniforms}
-              transparent
-              depthWrite={false}
-            />
-          ) : (
-            <meshStandardMaterial
-              color="#47646c"
-              transparent
-              opacity={0.08}
-              metalness={0.3}
-              roughness={0.6}
-              depthWrite={false}
-            />
-          )}
+          <primitive object={materials.glass} attach="material" dispose={null} />
         </mesh>
-        <mesh position={[0, 0, 0.569]}>
+        <mesh position={[0, 0, 0.492]}>
           <planeGeometry args={[1.87, 1.87]} />
-          <meshStandardMaterial
-            map={label}
-            transparent
-            depthWrite={false}
-            metalness={0.25}
-            roughness={0.7}
-          />
+          <primitive object={materials.marking} attach="material" dispose={null} />
         </mesh>
-        <Pins />
+        <mesh position={[0, 0, 0.572]}>
+          <planeGeometry args={[1.87, 1.87]} />
+          <primitive object={materials.etching} attach="material" dispose={null} />
+        </mesh>
+        <Pins materials={materials} />
         <lineSegments>
           <bufferGeometry>
-            <bufferAttribute attach="attributes-position" args={[tracePositions, 3]} />
+            <bufferAttribute
+              ref={traceAttribute}
+              attach="attributes-position"
+              args={[tracePositions, 3]}
+            />
           </bufferGeometry>
           <lineBasicMaterial color={color} transparent opacity={energized ? 0.55 : 0.25} />
         </lineSegments>
@@ -416,7 +470,7 @@ function ComputeCore({
             }}
           >
             <sphereGeometry args={[0.023, 8, 8]} />
-            <meshBasicMaterial color={color} />
+            <primitive object={materials.trace} attach="material" dispose={null} />
           </mesh>
         ))}
         {[-1, 1].flatMap((x) =>
@@ -427,7 +481,7 @@ function ComputeCore({
               rotation={[Math.PI / 2, 0, 0]}
             >
               <cylinderGeometry args={[0.028, 0.028, 0.018, 8]} />
-              <meshStandardMaterial color="#96adb4" metalness={0.75} roughness={0.48} />
+              <primitive object={materials.contacts} attach="material" dispose={null} />
             </mesh>
           )),
         )}
@@ -475,20 +529,33 @@ export default function CoreScene({
   quality: VisualQuality;
   commandMode: boolean;
 }) {
+  const [prepared, setPrepared] = useState(false);
+  const markReady = useCallback(() => setPrepared(true), []);
   return (
-    <Canvas
-      camera={{ position: [0, 0, 6.6], fov: 45 }}
-      dpr={[1, quality === "high" ? 1.5 : 1.25]}
-      frameloop="demand"
-      gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
-    >
-      <ComputeCore
-        paused={paused}
-        signal={signal}
-        tint={color}
-        quality={quality}
-        commandMode={commandMode}
-      />
-    </Canvas>
+    <>
+      <Canvas
+        style={{ opacity: prepared ? 1 : 0 }}
+        data-material-ready={prepared}
+        camera={{ position: [0, 0, 6.6], fov: 45 }}
+        dpr={[1, quality === "high" ? 1.5 : 1.25]}
+        frameloop="demand"
+        gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
+        onCreated={({ gl }) => {
+          gl.toneMapping = ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1;
+          gl.outputColorSpace = SRGBColorSpace;
+        }}
+      >
+        <ComputeCore
+          paused={paused}
+          signal={signal}
+          tint={color}
+          quality={quality}
+          commandMode={commandMode}
+        />
+        <MaterialRenderer quality={quality} onReady={markReady} />
+      </Canvas>
+      {!prepared && <CoreFallback />}
+    </>
   );
 }

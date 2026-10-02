@@ -1,0 +1,196 @@
+/* Material response: six black levels, restrained specular edges, no new blur layers. */
+:root {
+  --black-0: #080d11;
+  --black-1: #0d141b;
+  --black-2: #142222;
+  --black-3: #303a42;
+  --black-4: #3b4851;
+  --black-5: #59636b;
+  --material-reflection: rgb(197 216 229 / var(--material-sheen));
+  --material-edge: #b4c5ce29;
+  --material-seam: #03080bad;
+  --material-sheen: 0.035;
+  --panel-solid: var(--black-1);
+  --panel-glass: #101921ed;
+}
+.panel,
+.experiment-panel,
+.terminal-window,
+.command-palette {
+  background:
+    linear-gradient(165deg, var(--material-reflection), transparent 32%), var(--panel-solid);
+  box-shadow:
+    inset 0 1px #d7e5ef0d,
+    inset 1px 0 #b8cddc06,
+    inset 0 -1px var(--material-seam);
+}
+.terminal-window,
+.command-palette {
+  box-shadow:
+    inset 0 1px #d7e5ef15,
+    inset 1px 0 #b8cddc0a,
+    inset 0 -1px var(--material-seam),
+    0 20px 48px #0006;
+}
+.terminal-titlebar {
+  background:
+    linear-gradient(180deg, #bdced909, transparent 45%), linear-gradient(95deg, #1b262e, #131c24);
+  box-shadow: inset 0 -1px var(--material-seam);
+}
+.core-project-node {
+  background: linear-gradient(150deg, #b2c9d70a, transparent 42%), var(--panel-glass);
+  box-shadow:
+    inset 0 1px #b4c5ce10,
+    inset 0 -1px #0008;
+}
+.project-card {
+  --material-card: #101920;
+  --material-reflection: #bdd9e90b;
+  background:
+    linear-gradient(150deg, var(--material-reflection), transparent 40%), var(--material-card);
+  box-shadow:
+    inset 0 1px #d7e5ef0c,
+    inset 1px 0 #b8cddc05,
+    inset 0 -1px #03080b99,
+    0 5px 15px #0002;
+}
+.project-card[data-project="vision-navigation"] {
+  --material-card: #0e1922;
+  --material-reflection: #a8d5f611;
+}
+.project-card[data-project="airpocket"] {
+  --material-card: #111e24;
+  --material-reflection: #c4e4df12;
+}
+.project-card[data-project="swordsmith-notebook"] {
+  --material-card: #171a1d;
+  --material-reflection: #ddba8710;
+  background:
+    repeating-linear-gradient(0deg, #b9aea002 0 1px, transparent 1px 4px),
+    linear-gradient(155deg, var(--material-reflection), transparent 38%), var(--material-card);
+}
+.project-card[data-project="gomoku-ai"] {
+  --material-card: #151b23;
+  --material-reflection: #d1dbe70a;
+}
+.project-card:hover,
+.project-card:focus-visible {
+  box-shadow:
+    inset 0 1px #d7e5ef19,
+    inset 1px 0 #b8cddc09,
+    inset 0 -1px #0009,
+    0 8px 22px #0003;
+}
+.project-visual,
+.project-detail-visual .project-visual {
+  background:
+    linear-gradient(158deg, #d0dfe408, transparent 36%),
+    radial-gradient(
+      ellipse at 70% 72%,
+      color-mix(in srgb, var(--ambient-primary) 5%, transparent),
+      transparent 68%
+    ),
+    #0e171e;
+  box-shadow:
+    inset 0 1px #b7cbd512,
+    inset 0 -1px #02070b80;
+}
+.visual-vision,
+.project-detail-visual .visual-vision {
+  background: linear-gradient(140deg, #9bc8e90a, transparent 40%), #0d1822;
+}
+.visual-travel,
+.project-detail-visual .visual-travel {
+  background: linear-gradient(155deg, #cae4df0d, transparent 48%), #102027;
+}
+.visual-game,
+.project-detail-visual .visual-game {
+  background:
+    repeating-linear-gradient(0deg, #d2c5ab02 0 1px, transparent 1px 5px),
+    linear-gradient(160deg, #c694510d, transparent 36%), #151a1e;
+}
+.visual-algorithm,
+.project-detail-visual .visual-algorithm {
+  background: linear-gradient(165deg, #d5deec08, transparent 35%), #121922;
+}
+.project-visual .material-surface {
+  pointer-events: none;
+}
+.project-visual .diagram-ink .material-stone {
+  stroke: #9bb0bd;
+  stroke-width: 0.5;
+}
+.project-detail-visual {
+  box-shadow:
+    inset 0 1px #b7cbd519,
+    0 8px 22px #0002;
+}
+.project-card[data-cursor-glow]::after,
+.experiment-panel[data-cursor-glow]::after {
+  background: radial-gradient(
+    210px 95px at var(--cursor-x) var(--cursor-y),
+    #d6e7f207,
+    transparent 75%
+  );
+}
+.online i,
+.status-square,
+.core-project-node i,
+.project-card-status i {
+  background-image: radial-gradient(circle at 32% 24%, #fff9 0 8%, transparent 36%);
+  box-shadow:
+    0 0 0 1px #03090b,
+    0 0 0 2px #6d7a8333,
+    inset 0 -1px #0004;
+}
+.diagram-link,
+.route-signal-line {
+  filter: drop-shadow(0 0 0.6px #91d3e54d);
+}
+.route-signal-line {
+  background: linear-gradient(90deg, transparent, #d3edf1b0, var(--ambient-primary), transparent);
+}
+.fallback-chip {
+  border-color: #839da780;
+  background:
+    linear-gradient(145deg, #bbcdd622, transparent 26%),
+    repeating-linear-gradient(0deg, #a9bac004 0 1px, transparent 1px 4px),
+    linear-gradient(145deg, #25343e, #121b25);
+  box-shadow:
+    inset 0 1px #dce9ef35,
+    inset 1px 0 #a1b9c21a,
+    inset 0 -2px #04080c90,
+    0 0 0 6px #1d2c33,
+    0 0 0 7px #82969d55,
+    5px 8px 16px #0004;
+}
+.fallback-chip::before {
+  background:
+    repeating-linear-gradient(90deg, #9aa8ad 0 1px, #596771 1px 3px, transparent 3px 12px) top/100%
+      7px no-repeat,
+    repeating-linear-gradient(90deg, #9aa8ad 0 1px, #596771 1px 3px, transparent 3px 12px)
+      bottom/100% 7px no-repeat,
+    repeating-linear-gradient(0deg, #9aa8ad 0 1px, #596771 1px 3px, transparent 3px 12px) left/7px
+      100% no-repeat,
+    repeating-linear-gradient(0deg, #9aa8ad 0 1px, #596771 1px 3px, transparent 3px 12px) right/7px
+      100% no-repeat;
+}
+.fallback-chip::after {
+  border-color: #8ba3ae2a;
+  background:
+    linear-gradient(135deg, #cadde213, transparent 32%),
+    repeating-linear-gradient(0deg, transparent 0 18px, #80bcc70a 18px 19px);
+}
+[data-quality="medium"] {
+  --material-sheen: 0.02;
+}
+[data-quality="low"] .diagram-link,
+[data-quality="low"] .route-signal-line {
+  filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .diagram-link,
+  .route-signal-line {
+    filter: none;
+  }
+}

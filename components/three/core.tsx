@@ -2,25 +2,12 @@
 import dynamic from "next/dynamic";
 import { Component, useEffect, useRef, useState, type ReactNode } from "react";
 import { useMotionPreferences } from "@/components/ui/motion-provider";
+import { CoreFallback } from "./core-fallback";
 
 const CoreScene = dynamic(() => import("./core-scene"), {
   ssr: false,
   loading: () => <CoreFallback />,
 });
-function CoreFallback() {
-  return (
-    <div className="core-fallback" aria-hidden="true">
-      <div className="fallback-orbit" />
-      <div className="fallback-orbit second" />
-      <div className="fallback-circuit" />
-      <div className="fallback-chip">
-        <span>M</span>
-        <strong>MARCELL.OS</strong>
-        <small>COMPUTE CORE / 01</small>
-      </div>
-    </div>
-  );
-}
 class CoreBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {

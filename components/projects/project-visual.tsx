@@ -58,9 +58,106 @@ export function ProjectVisual({
                 <stop stopColor="currentColor" stopOpacity=".1" />
                 <stop offset="1" stopColor="currentColor" stopOpacity="0" />
               </radialGradient>
+              <linearGradient id={`surface-${id}`} x1="0" y1="0" x2="1" y2="1">
+                <stop stopColor="#607789" stopOpacity={kind === "travel" ? ".16" : ".11"} />
+                <stop offset=".38" stopColor="#27343e" stopOpacity=".09" />
+                <stop offset="1" stopColor="#070c12" stopOpacity=".46" />
+              </linearGradient>
+              <linearGradient id={`edge-${id}`} x1="0" y1="0" x2="1" y2="1">
+                <stop stopColor="#c3d8e5" stopOpacity=".32" />
+                <stop offset=".45" stopColor="#79939f" stopOpacity=".09" />
+                <stop offset="1" stopColor="#03080d" stopOpacity=".5" />
+              </linearGradient>
+              <radialGradient id={`stone-light-${id}`} cx=".32" cy=".23" r=".8">
+                <stop stopColor="#e3e9e9" />
+                <stop offset=".42" stopColor="#b6c4cd" />
+                <stop offset="1" stopColor="#758796" />
+              </radialGradient>
+              <radialGradient id={`stone-dark-${id}`} cx=".32" cy=".23" r=".8">
+                <stop stopColor="#66717d" />
+                <stop offset=".38" stopColor="#384551" />
+                <stop offset="1" stopColor="#18232e" />
+              </radialGradient>
             </defs>
             <rect width="500" height="280" fill={`url(#grid-${id})`} />
             <ellipse cx="250" cy="130" rx="235" ry="145" fill={`url(#glow-${id})`} />
+            <g className="material-surface">
+              {kind === "vision" && (
+                <>
+                  <rect
+                    x="32"
+                    y="46"
+                    width="290"
+                    height="180"
+                    rx="3"
+                    fill={`url(#surface-${id})`}
+                    stroke={`url(#edge-${id})`}
+                  />
+                  <path d="M35 47H318M33 49V221" stroke="#c1d9e7" strokeOpacity=".1" />
+                  <path d="M36 53L186 53L36 164Z" fill="#a9cde2" fillOpacity=".035" />
+                  <ellipse
+                    cx="283"
+                    cy="66"
+                    rx="22"
+                    ry="8"
+                    fill="none"
+                    stroke="#9ec5df"
+                    strokeOpacity=".12"
+                  />
+                </>
+              )}
+              {kind === "travel" && (
+                <>
+                  <rect
+                    x="36"
+                    y="66"
+                    width="285"
+                    height="153"
+                    rx="3"
+                    fill={`url(#surface-${id})`}
+                    stroke={`url(#edge-${id})`}
+                  />
+                  <path
+                    d="M49 55H311V208H49Z"
+                    fill="#aeced0"
+                    fillOpacity=".025"
+                    stroke="#b2d5d3"
+                    strokeOpacity=".12"
+                  />
+                  <path d="M50 56H310" stroke="#d9efec" strokeOpacity=".13" />
+                </>
+              )}
+              {kind === "game" && (
+                <>
+                  <rect
+                    x="25"
+                    y="58"
+                    width="450"
+                    height="179"
+                    rx="2"
+                    fill={`url(#surface-${id})`}
+                    stroke={`url(#edge-${id})`}
+                  />
+                  <path d="M27 59H471" stroke="#d9bc93" strokeOpacity=".12" />
+                  <path d="M27 234H473" stroke="#03080a" strokeOpacity=".55" />
+                </>
+              )}
+              {kind === "algorithm" && (
+                <>
+                  <rect
+                    x="32"
+                    y="63"
+                    width="168"
+                    height="168"
+                    rx="2"
+                    fill={`url(#surface-${id})`}
+                    stroke={`url(#edge-${id})`}
+                  />
+                  <path d="M34 64H198M33 66V228" stroke="#b0c1cf" strokeOpacity=".14" />
+                  <path d="M34 230H198" stroke="#02070b" strokeOpacity=".7" />
+                </>
+              )}
+            </g>
             <g className="diagram-ink" stroke="currentColor" strokeWidth="1">
               {kind === "vision" && (
                 <>
@@ -256,7 +353,8 @@ export function ProjectVisual({
                         cx={x * 11.5}
                         cy={y * 11.5}
                         r="4.4"
-                        fill={index % 2 ? "#31424d" : "#c5d9e5"}
+                        className="material-stone"
+                        fill={`url(#stone-${index % 2 ? "dark" : "light"}-${id})`}
                         strokeOpacity=".5"
                       />
                     ))}

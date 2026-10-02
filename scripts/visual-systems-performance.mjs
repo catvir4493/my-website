@@ -13,13 +13,21 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   await context.addInitScript(() => {
     sessionStorage.setItem("marcell:booted", "1");
-    window.__coreStats = { clears: 0, draws: 0, viewTransitions: 0 };
+    window.__coreStats = { clears: 0, frames: 0, draws: 0, viewTransitions: 0 };
     for (const proto of [WebGLRenderingContext.prototype, WebGL2RenderingContext.prototype]) {
+      const bind = proto.bindFramebuffer;
+      const framebuffers = new WeakMap();
+      proto.bindFramebuffer = function (target, framebuffer) {
+        if (target === this.FRAMEBUFFER || target === this.DRAW_FRAMEBUFFER)
+          framebuffers.set(this, framebuffer);
+        return bind.call(this, target, framebuffer);
+      };
       for (const name of ["clear", "drawArrays", "drawElements", "drawElementsInstanced"]) {
         const original = proto[name];
         if (!original) continue;
         proto[name] = function (...args) {
           window.__coreStats[name === "clear" ? "clears" : "draws"]++;
+          if (name === "clear" && !framebuffers.get(this)) window.__coreStats.frames++;
           return original.apply(this, args);
         };
       }
@@ -71,8 +79,10 @@ try {
     return {
       label,
       ...measured,
-      coreFramesPerSecond: (after.clears - before.clears) / measured.elapsed,
-      drawsPerCoreFrame: (after.draws - before.draws) / Math.max(1, after.clears - before.clears),
+      coreFramesPerSecond: (after.frames - before.frames) / measured.elapsed,
+      offscreenPassesPerSecond:
+        (after.clears - before.clears - (after.frames - before.frames)) / measured.elapsed,
+      drawsPerCoreFrame: (after.draws - before.draws) / Math.max(1, after.frames - before.frames),
       rendererMainThreadMsPerSecond:
         ((end.TaskDuration - start.TaskDuration) * 1000) / measured.elapsed,
     };
@@ -108,8 +118,10 @@ try {
     document.dispatchEvent(new Event("visibilitychange"));
   });
   const beforeTransition = await page.evaluate(() => window.__coreStats.viewTransitions);
+  const transitionSample = sample("project transition / core to detail", 1400);
   await page.locator(".core-project-node").first().click();
   await page.locator("h1").filter({ hasText: "Vision Navigation" }).waitFor();
+  samples.push(await transitionSample);
   await page.waitForTimeout(700);
   const transitions =
     (await page.evaluate(() => window.__coreStats.viewTransitions)) - beforeTransition;
@@ -142,7 +154,7 @@ try {
   const result = {
     browser: "Chromium / Edge headless",
     caveat:
-      "WebGL may use software rendering. UI FPS measures browser RAF cadence; core frames measure actual GL clears. TaskDuration is renderer main-thread work, not total system CPU. Hidden visibility is simulated.",
+      "WebGL may use software rendering. UI FPS measures browser RAF cadence; core frames count only clears of the default framebuffer, excluding PMREM/transmission passes. TaskDuration is renderer main-thread work, not total system CPU. Hidden visibility is simulated.",
     samples,
     viewTransitionsAfterCoreNavigation: transitions,
     sharedDiagramTransitionsObserved: diagramTransitions,

@@ -72,7 +72,7 @@ test("quiet mode rests visuals while keeping terminal and keyboard controls usab
   const input = page.getByRole("textbox", { name: "Terminal command" });
   await input.fill("neofetch");
   await input.press("Enter");
-  await expect(page.getByRole("dialog")).toContainText("v1.3.0");
+  await expect(page.getByRole("dialog")).toContainText("v1.4.0");
   await page.keyboard.press("Escape");
   await expect(page.locator(".system-root")).toHaveAttribute("data-shell-mode", "false");
 });
