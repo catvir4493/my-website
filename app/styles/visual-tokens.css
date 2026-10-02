@@ -1,0 +1,67 @@
+/* MARCELL.OS 1.2 — shared depth, material and motion vocabulary. */
+:root {
+  --depth-background: 0;
+  --depth-environment: 1;
+  --depth-atmosphere: 2;
+  --depth-content: 3;
+  --depth-hud: 40;
+  --depth-dialog: 90;
+  --depth-boot: 120;
+  --depth-cursor: 150;
+  --panel-solid: #0c1217;
+  --panel-glass: #101921dc;
+  --panel-open: #10192160;
+  --line-muted: #26333c;
+  --line-active: #6899a9;
+  --status-green: #b0d69a;
+  --glow-low: 0.05;
+  --glow-medium: 0.1;
+  --glow-high: 0.16;
+  --glow-strength: var(--glow-medium);
+  --blur-panel: 12px;
+  --blur-focus: 3px;
+  --opacity-grid: 0.035;
+  --opacity-atmosphere: 0.1;
+  --opacity-noise: 0.018;
+  --motion-fast: 160ms;
+  --motion-standard: 280ms;
+  --motion-system: 500ms;
+  --motion-cinematic: 800ms;
+  --motion-environment: 1600ms;
+  --ease-system: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-amount: 1;
+  --parallax-background: 0.65;
+  --parallax-grid: 1;
+  --parallax-atmosphere: 2.5;
+  --parallax-hud: -0.3;
+  --parallax-x: 0px;
+  --parallax-y: 0px;
+  --scroll-depth: 0px;
+  --ambient-primary: #7acddd;
+  --ambient-secondary: #8c82b6;
+  --cursor-x: 50%;
+  --cursor-y: 50%;
+  --cursor-strength: 0;
+}
+@property --ambient-primary {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #7acddd;
+}
+@property --ambient-secondary {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #8c82b6;
+}
+[data-quality="medium"] {
+  --blur-panel: 8px;
+  --motion-amount: 0.6;
+}
+[data-quality="low"] {
+  --blur-panel: 8px;
+  --motion-amount: 0;
+  --parallax-background: 0;
+  --parallax-grid: 0;
+  --parallax-atmosphere: 0;
+  --parallax-hud: 0;
+}

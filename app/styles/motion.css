@@ -1,0 +1,64 @@
+@keyframes avatar-scan {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10%,
+  80% {
+    opacity: 1;
+  }
+  90% {
+    transform: translateY(60px);
+    opacity: 0;
+  }
+}
+@keyframes loader {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(430%);
+  }
+}
+.focus-ticker {
+  display: block;
+  min-height: 13px;
+}
+.focus-ticker > span {
+  display: inline-block;
+  animation: ticker-enter var(--motion-system) ease-out;
+}
+.log-entry.is-visible h3 {
+  animation: log-typing 1.2s steps(28, end) both;
+}
+@keyframes log-typing {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes ticker-enter {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+[data-lite="true"] .digital-avatar i {
+  animation: none;
+}
+[data-motion="paused"] *,
+[data-motion="paused"] *::before,
+[data-motion="paused"] *::after {
+  animation: none !important;
+  transition-duration: 0s !important;
+}
+[data-motion="paused"] {
+  scroll-behavior: auto;
+}

@@ -1,0 +1,54 @@
+.core-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.fallback-orbit {
+  width: 80%;
+  aspect-ratio: 1;
+  position: absolute;
+  border: 1px solid #72e1f538;
+  border-radius: 50%;
+  transform: rotateX(52deg) rotateZ(-25deg);
+}
+.fallback-orbit.second {
+  width: 88%;
+  transform: rotateY(52deg) rotateZ(28deg);
+  border-color: #a79af730;
+}
+.fallback-chip {
+  width: 40%;
+  max-width: 240px;
+  aspect-ratio: 1;
+  border: 1px solid #67bac5;
+  background: linear-gradient(135deg, #15212c, #080f17);
+  box-shadow:
+    0 0 0 7px #132731,
+    0 0 0 8px #3a666f,
+    0 0 40px #72e1f517;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  transform: rotate(-12deg);
+}
+.fallback-chip > span {
+  font-family: var(--heading);
+  color: #b5e7f5;
+  font-size: 75px;
+  line-height: 1.4;
+}
+.fallback-chip strong {
+  font-family: var(--font-code), monospace;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+}
+.fallback-chip small {
+  font-family: var(--font-code), monospace;
+  font-size: 0.5rem;
+  margin-top: 9px;
+  color: #82a7b6;
+}

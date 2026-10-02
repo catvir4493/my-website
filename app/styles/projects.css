@@ -1,0 +1,223 @@
+.route-page {
+  padding: 64px 3.5% 88px;
+  min-height: 70vh;
+}
+.route-hero {
+  padding: 30px 0 40px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 35px;
+}
+.route-hero h1 {
+  font-size: clamp(48px, 6vw, 92px);
+  letter-spacing: -0.065em;
+  margin: 20px 0;
+}
+.route-hero > p:not(.eyebrow) {
+  max-width: 620px;
+  color: #9aafbc;
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #7896a8;
+  font-size: 0.625rem;
+}
+.breadcrumb a:hover {
+  color: var(--cyan);
+}
+.archive-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+}
+.archive-grid .project-card h3 {
+  font-size: 28px;
+}
+.archive-grid .project-card-body {
+  padding: 27px;
+}
+.archive-grid .project-visual svg {
+  max-height: 290px;
+}
+.archive-grid .project-card-body > p:not(.eyebrow) {
+  font-size: 0.875rem;
+  min-height: auto;
+}
+.archive-grid .project-tech span {
+  font-size: 0.625rem;
+}
+.archive-grid .project-card-top,
+.archive-grid .project-card-status {
+  font-size: 0.625rem;
+}
+.archive-grid .visual-caption {
+  font-size: 0.5625rem;
+}
+.archive-grid .eyebrow {
+  font-size: 0.625rem;
+}
+.project-detail-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 35px;
+  margin: 48px 0 40px;
+}
+.project-detail-top h1 {
+  font-size: clamp(42px, 5.5vw, 82px);
+  letter-spacing: -0.06em;
+  margin: 15px 0;
+}
+.project-detail-top p:not(.eyebrow) {
+  color: #a0b6c3;
+}
+.project-detail-meta {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 0.625rem;
+  color: #8caab9;
+  flex-shrink: 0;
+}
+.project-detail-visual {
+  border: 1px solid #2e4754;
+}
+.project-detail-visual .project-visual svg {
+  max-height: 510px;
+}
+.project-detail-visual .visual-caption {
+  font-size: 0.625rem;
+  bottom: 18px;
+  left: 25px;
+}
+.project-visual-note {
+  padding: 12px 22px;
+  color: #8cabb9;
+  font-size: 0.625rem;
+  background: #102029;
+}
+.project-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 65px;
+  margin-top: 58px;
+}
+.project-detail-copy > section {
+  margin-bottom: 36px;
+}
+.project-detail-copy h2 {
+  margin-bottom: 18px;
+  font-size: 30px;
+  letter-spacing: -0.04em;
+}
+.project-detail-copy .eyebrow {
+  margin-bottom: 13px;
+  color: var(--cyan);
+}
+.project-detail-copy section > p:not(.eyebrow) {
+  color: #a9bdca;
+  line-height: 1.9;
+  max-width: 740px;
+}
+.architecture-flow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 22px 0;
+}
+.architecture-flow > div {
+  flex: 1;
+  min-width: 130px;
+  background: #101e27;
+  border: 1px solid #2b4656;
+  padding: 17px;
+  position: relative;
+}
+.architecture-flow span {
+  font-family: var(--font-code), monospace;
+  color: #7dacc3;
+  font-size: 0.625rem;
+}
+.architecture-flow strong {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  margin-top: 10px;
+}
+.detail-sidebar {
+  align-self: start;
+  position: sticky;
+  top: 112px;
+  padding-bottom: 25px;
+}
+.detail-sidebar dl {
+  margin: 25px;
+}
+.detail-sidebar dl > div {
+  margin-bottom: 20px;
+}
+.detail-sidebar dd {
+  margin-top: 7px;
+}
+.detail-sidebar .project-tech {
+  margin: 7px 0;
+}
+.detail-sidebar .project-tech span {
+  font-size: 0.625rem;
+}
+.detail-sidebar .button {
+  margin: 0 24px;
+  width: calc(100% - 48px);
+}
+.detail-sidebar > p {
+  margin: 20px 25px 0;
+  color: #8da7b7;
+  font-size: 0.75rem;
+}
+.project-next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 35px 0 0;
+  border-top: 1px solid var(--line);
+  margin-top: 30px;
+}
+.project-next h2 {
+  font-size: 30px;
+  margin-top: 10px;
+  letter-spacing: -0.04em;
+}
+.project-next > svg {
+  color: var(--cyan);
+}
+.route-loader {
+  padding: 140px 10%;
+  min-height: 60vh;
+}
+.loader-track {
+  width: 300px;
+  max-width: 100%;
+  height: 2px;
+  background: #253c49;
+  margin-top: 25px;
+  overflow: hidden;
+}
+.loader-track span {
+  display: block;
+  width: 30%;
+  height: 100%;
+  background: var(--cyan);
+  animation: loader 1.3s ease-in-out infinite;
+}
+.not-found h1 {
+  font-size: 130px;
+  margin: 30px 0;
+}
+.not-found > p {
+  color: #a2b8c7;
+  margin-bottom: 30px;
+}

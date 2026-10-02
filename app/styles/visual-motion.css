@@ -1,0 +1,386 @@
+/* State changes animate once; ambient loops only run in visible modules. */
+.module-reveal {
+  position: relative;
+}
+.module-reveal .section-heading {
+  position: relative;
+}
+.module-reveal .section-heading::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, #7acddd70, transparent 60%);
+  transform-origin: left;
+  transform: scaleX(0);
+}
+.module-reveal[data-online="true"] .section-heading::after {
+  animation: edge-lock var(--motion-system) var(--ease-system) forwards;
+}
+.module-reveal[data-online="true"] .section-heading h2 {
+  animation: system-focus var(--motion-system) var(--ease-system);
+}
+.route-resolve {
+  animation: navigation-resolve var(--motion-system) var(--ease-system);
+}
+::view-transition-group(.module-morph) {
+  animation-duration: var(--motion-system);
+  animation-timing-function: var(--ease-system);
+}
+::view-transition-old(.module-morph),
+::view-transition-new(.module-morph) {
+  animation-duration: var(--motion-system);
+  animation-timing-function: var(--ease-system);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+html[data-route-state="departing"] main {
+  opacity: 0.82;
+  transition: opacity var(--motion-fast);
+}
+.route-signal {
+  position: fixed;
+  z-index: var(--depth-hud);
+  left: 50%;
+  bottom: 35px;
+  transform: translateX(-50%);
+  padding: 14px 20px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  max-width: calc(100% - 40px);
+  color: #acbbc4;
+  border: 1px solid color-mix(in srgb, var(--ambient-primary) 35%, #17222c);
+  background: #0c141af5;
+  pointer-events: none;
+  animation: phosphor-in var(--motion-standard) var(--ease-system);
+  box-shadow: 0 12px 35px #0005;
+}
+.route-signal strong {
+  color: #deebee;
+  font:
+    500 13px var(--font-body),
+    sans-serif;
+  white-space: nowrap;
+}
+.route-signal small {
+  font-size: 8px;
+  color: var(--ambient-primary);
+  white-space: nowrap;
+}
+.route-signal-line {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 40%;
+  height: 1px;
+  background: var(--ambient-primary);
+}
+.project-detail-top {
+  animation: system-focus var(--motion-system) var(--ease-system);
+}
+.project-detail-visual {
+  position: relative;
+}
+.project-detail-visual::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(transparent, var(--ambient-primary), transparent);
+  opacity: 0;
+  pointer-events: none;
+  animation: project-scan var(--motion-cinematic) var(--ease-system);
+}
+.terminal-window {
+  animation: module-load var(--motion-standard) var(--ease-system);
+}
+.terminal-titlebar {
+  animation: phosphor-in var(--motion-standard) var(--ease-system) both;
+}
+.terminal-output,
+.terminal-input {
+  animation: phosphor-in var(--motion-standard) var(--ease-system) 90ms both;
+}
+.terminal-input label,
+.terminal-command span {
+  text-shadow: 0 0 9px #72e1f522;
+}
+.terminal-input input {
+  caret-color: var(--cyan);
+}
+.command-palette {
+  animation: system-focus var(--motion-standard) var(--ease-system);
+}
+.modal-backdrop {
+  animation: phosphor-in var(--motion-fast) var(--ease-system);
+}
+.palette-option {
+  position: relative;
+}
+.palette-option.selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 2px;
+  background: var(--cyan);
+}
+.online i,
+.status-square {
+  position: relative;
+  border-radius: 50%;
+  box-shadow: none;
+}
+.online i::after,
+.status-square::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 1px solid currentColor;
+  opacity: 0.18;
+  border-radius: 50%;
+  animation: status-breathe 3.4s ease-in-out infinite;
+}
+.diagram-ink text {
+  fill: currentColor;
+  stroke: none;
+  font:
+    10px var(--font-code),
+    monospace;
+  letter-spacing: 0.03em;
+}
+.diagram-ink .diagram-subtext {
+  opacity: 0.6;
+  font-size: 8px;
+}
+.project-visual.large .diagram-stage {
+  animation: diagram-activate 14s var(--ease-system) infinite;
+  animation-delay: calc(var(--stage) * 700ms);
+}
+.project-visual.large .diagram-link {
+  stroke-dasharray: 8 140;
+  animation: signal-travel 7s linear infinite;
+}
+.corridor-highlight {
+  color: #d3b39a;
+}
+.project-visual[data-visual-visible="false"] *,
+.system-architecture[data-visual-visible="false"] * {
+  animation-play-state: paused !important;
+}
+.skill-node[data-state="related"] {
+  border-color: #577b8d;
+  background: #111e26;
+}
+.skill-node[data-state="idle"] {
+  color: #95a9b6;
+}
+.skill-node[data-state="idle"] .skill-symbol {
+  opacity: 0.55;
+}
+.skill-node:hover,
+.skill-node:focus-visible {
+  opacity: 1;
+}
+.skill-node.selected::after,
+.skill-node[data-state="related"]::after {
+  background: linear-gradient(90deg, transparent, #8ed2e4, transparent);
+  background-size: 200% 100%;
+  animation: node-signal 3s ease-in-out 1;
+}
+.skill-inspector .skill-evidence {
+  animation: phosphor-in var(--motion-standard) var(--ease-system);
+}
+.heap-cells > div {
+  transition:
+    background var(--motion-standard),
+    border-color var(--motion-standard),
+    color var(--motion-standard);
+  box-shadow:
+    inset 0 1px #ffffff05,
+    0 2px 0 #0005;
+}
+.heap-cells > div[data-allocated="true"] {
+  animation: memory-allocate var(--motion-standard) var(--ease-system);
+}
+.stack-frame {
+  animation: module-load var(--motion-standard) var(--ease-system);
+  box-shadow:
+    inset 0 1px #ffffff07,
+    0 3px #0003;
+}
+.path-cell {
+  transition:
+    background var(--motion-fast),
+    border-color var(--motion-fast),
+    color var(--motion-fast);
+}
+.path-cell[data-kind="current"] {
+  animation: data-settle var(--motion-standard) var(--ease-system);
+}
+.path-cell[data-kind="path"] {
+  animation: path-lock var(--motion-standard) var(--ease-system);
+}
+@keyframes system-focus {
+  from {
+    opacity: 0.65;
+    filter: blur(var(--blur-focus));
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+@keyframes module-load {
+  from {
+    opacity: 0.4;
+    transform: translateY(5px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes navigation-resolve {
+  from {
+    transform: translateY(7px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes phosphor-in {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes edge-lock {
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes project-scan {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.4;
+  }
+  85% {
+    opacity: 0.2;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+@keyframes status-breathe {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+@keyframes diagram-activate {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  16%,
+  48% {
+    opacity: 1;
+  }
+  64% {
+    opacity: 0.55;
+  }
+}
+@keyframes signal-travel {
+  0%,
+  28% {
+    stroke-dashoffset: 140;
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.9;
+  }
+  70%,
+  100% {
+    stroke-dashoffset: -140;
+    opacity: 0;
+  }
+}
+@keyframes node-signal {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@keyframes memory-allocate {
+  from {
+    transform: scale(0.96);
+    opacity: 0.65;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes data-settle {
+  from {
+    box-shadow: inset 0 0 0 1px #f1f8fb;
+  }
+  to {
+    box-shadow: inset 0 0 0 1px transparent;
+  }
+}
+@keyframes path-lock {
+  from {
+    opacity: 0.55;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+[data-dormant="true"] *,
+[data-dormant="true"] *::before,
+[data-dormant="true"] *::after {
+  animation-play-state: paused !important;
+}
+[data-quality="low"] .project-visual *,
+[data-quality="low"] .system-architecture *,
+[data-quality="low"] .route-resolve,
+[data-quality="low"] .project-detail-top,
+[data-quality="low"] .project-detail-visual::after {
+  animation: none;
+}
+[data-quality="low"] .route-signal {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-resolve,
+  .project-detail-top {
+    transform: none;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

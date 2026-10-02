@@ -1,0 +1,254 @@
+@media (min-width: 1700px) {
+  .status-bar,
+  .hero,
+  .section,
+  .footer,
+  .route-page {
+    padding-left: max(3.5%, calc((100vw - 1580px) / 2));
+    padding-right: max(3.5%, calc((100vw - 1580px) / 2));
+  }
+  .hero-main {
+    min-height: 735px;
+  }
+  .hero-visual {
+    height: 670px;
+  }
+}
+@media (max-width: 1200px) {
+  .header-status > .online {
+    display: none;
+  }
+  .status-bar {
+    gap: 18px;
+  }
+  .main-nav {
+    gap: 17px;
+  }
+  .module-link {
+    padding: 28px 16px;
+    gap: 13px;
+  }
+  .module-link h2 {
+    font-size: 15px;
+  }
+  .module-link p {
+    font-size: 0.625rem;
+  }
+  .module-number {
+    right: 12px;
+  }
+  .skill-nodes {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .skill-node:nth-child(4n)::after {
+    display: block;
+  }
+  .skill-node:nth-child(3n)::after,
+  .skill-node:last-child::after {
+    display: none;
+  }
+  .hero-main {
+    min-height: 620px;
+  }
+  .hero-visual {
+    height: 530px;
+  }
+  .hero h1 {
+    font-size: clamp(64px, 6.5vw, 83px);
+  }
+  .core-label {
+    left: 16%;
+  }
+  .label-left {
+    left: -10px;
+  }
+  .profile-layout {
+    gap: 5%;
+  }
+  .telemetry-stats > div {
+    padding: 20px 17px;
+    column-gap: 9px;
+  }
+  .timeline {
+    gap: 24px;
+  }
+}
+@media (max-width: 1000px) {
+  .nav-number {
+    display: none;
+  }
+  .header-time {
+    display: none;
+  }
+  .main-nav {
+    gap: 21px;
+  }
+  .status-bar {
+    height: 78px;
+  }
+  .brand small {
+    font-size: 0.5rem;
+  }
+  .hero-main {
+    grid-template-columns: 1.05fr 1fr;
+    min-height: 590px;
+  }
+  .hero h1 {
+    font-size: 66px;
+  }
+  .hero-visual {
+    height: 475px;
+  }
+  .hero-description p {
+    font-size: 0.8125rem;
+  }
+  .floating-label {
+    display: none;
+  }
+  .core-bottom {
+    left: 4%;
+    right: 0;
+    font-size: 0.5rem;
+  }
+  .core-bottom .online {
+    font-size: 0.5rem;
+  }
+  .core-label {
+    left: 10%;
+    font-size: 0.5rem;
+  }
+  .module-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .module-link {
+    padding: 25px;
+  }
+  .module-link:nth-child(3) {
+    border-left: 1px solid var(--line);
+    border-top: 1px solid var(--line);
+  }
+  .module-link:nth-child(4) {
+    border-top: 1px solid var(--line);
+  }
+  .module-link h2 {
+    font-size: 18px;
+  }
+  .module-link p {
+    font-size: 0.6875rem;
+  }
+  .project-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .project-card h3 {
+    font-size: 24px;
+  }
+  .project-card-body .eyebrow {
+    font-size: 0.625rem;
+  }
+  .project-card-body > p:not(.eyebrow) {
+    font-size: 0.8125rem;
+    min-height: 30px;
+  }
+  .project-tech span,
+  .project-card-top,
+  .project-card-status {
+    font-size: 0.5625rem;
+  }
+  .visual-caption {
+    font-size: 0.5rem;
+  }
+  .skills-layout {
+    grid-template-columns: 1fr 260px;
+    gap: 18px;
+  }
+  .skill-network {
+    padding: 16px;
+  }
+  .skill-nodes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .skill-node:nth-child(3n)::after {
+    display: block;
+  }
+  .skill-node:nth-child(2n)::after,
+  .skill-node:last-child::after {
+    display: none;
+  }
+  .profile-layout {
+    grid-template-columns: 1fr 1.1fr;
+    gap: 4%;
+  }
+  .identity-top {
+    padding: 23px;
+    gap: 16px;
+  }
+  .identity-data {
+    padding: 0 23px 18px;
+  }
+  .digital-avatar {
+    width: 82px;
+    height: 90px;
+  }
+  .identity-data > div {
+    grid-template-columns: 90px 1fr;
+  }
+  .identity-bottom {
+    padding: 13px 20px;
+    font-size: 0.4375rem;
+  }
+  .telemetry-layout {
+    grid-template-columns: 1.5fr 1fr;
+  }
+  .contribution-grid {
+    margin: 23px 17px 18px;
+    gap: 3px;
+  }
+  .contribution-legend {
+    padding: 0 17px 20px;
+  }
+  .telemetry-stats > div {
+    column-gap: 7px;
+    padding: 19px 12px;
+  }
+  .telemetry-stats strong {
+    font-size: 25px;
+  }
+  .telemetry-stats > div > span:last-child {
+    font-size: 0.4375rem;
+  }
+  .timeline {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .lab-invitation {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 20px;
+    padding: 22px;
+  }
+  .lab-invitation > svg:first-child {
+    grid-row: 1 / 4;
+    align-self: center;
+    margin: 0;
+  }
+  .lab-invitation h3 {
+    margin: 0;
+  }
+  .lab-invitation p {
+    grid-column: 2;
+  }
+  .footer-controls {
+    gap: 12px;
+  }
+  .footer-controls > .online {
+    display: none;
+  }
+  .contact-bottom {
+    flex-wrap: wrap;
+  }
+  .project-detail-grid {
+    grid-template-columns: 1fr 260px;
+    gap: 30px;
+  }
+}

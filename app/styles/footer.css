@@ -1,0 +1,38 @@
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 27px 3.5%;
+  gap: 20px;
+}
+.footer > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.footer-brand {
+  font-family: var(--heading);
+  font-size: 16px;
+  letter-spacing: 0.045em;
+}
+.footer .mono {
+  font-size: 0.5rem;
+  color: #768f9f;
+}
+.footer > p {
+  color: #8397a5;
+  font-size: 0.6875rem;
+}
+.footer-controls {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.footer-controls button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.625rem;
+  color: #93aab8;
+  border: 0;
+}

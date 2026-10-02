@@ -1,0 +1,137 @@
+.status-bar {
+  display: flex;
+  align-items: center;
+  height: 88px;
+  gap: 24px;
+  padding: 0 3.5%;
+  border-bottom: 1px solid var(--line);
+  background: #080b0de8;
+  backdrop-filter: blur(18px);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--heading);
+  font-size: 19px;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+.brand-mark {
+  font-size: 33px;
+  font-weight: 600;
+  letter-spacing: -0.17em;
+  margin-right: 6px;
+}
+.brand-mark > span {
+  color: var(--cyan);
+  font-size: 22px;
+}
+.brand small {
+  display: block;
+  font-family: var(--font-code), monospace;
+  color: var(--muted);
+  letter-spacing: 0.09em;
+  font-size: 0.5625rem;
+  margin-top: 7px;
+}
+.main-nav {
+  display: flex;
+  gap: 23px;
+  margin: auto;
+  align-items: center;
+  height: 100%;
+}
+.main-nav a {
+  position: relative;
+  color: #a5afb7;
+  font-size: 0.8125rem;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  height: 100%;
+  transition: color var(--motion-fast);
+}
+.main-nav a:hover,
+.main-nav a.active {
+  color: #f2f7f9;
+}
+.main-nav a.active::after {
+  position: absolute;
+  content: "";
+  height: 2px;
+  background: var(--cyan);
+  bottom: 0;
+  left: 0;
+  right: 0;
+  box-shadow: 0 0 10px #72e1f570;
+}
+.nav-number {
+  font-family: var(--font-code), monospace;
+  font-size: 0.625rem;
+  color: #6b8793;
+}
+.header-status {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+}
+.online {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-code), monospace;
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+.online i {
+  width: 5px;
+  height: 5px;
+  background: #b9e994;
+  border-radius: 50%;
+  box-shadow: 0 0 9px #b9e99455;
+}
+.header-time {
+  font-family: var(--font-code), monospace;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+.header-time small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.5625rem;
+  margin-top: 5px;
+  letter-spacing: 0.08em;
+}
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  min-width: 36px;
+  min-height: 36px;
+  transition:
+    background var(--motion-fast),
+    border-color var(--motion-fast);
+}
+.icon-button:hover {
+  background: #142027;
+  border-color: #41606e;
+}
+.palette-trigger {
+  gap: 5px;
+  padding: 0 9px;
+}
+.palette-trigger kbd {
+  font-size: 0.625rem;
+  color: var(--muted);
+}
+.mobile-menu {
+  display: none;
+}
