@@ -135,6 +135,8 @@ test("command palette supports filtering, keyboard selection, and empty results"
   page,
 }) => {
   await page.goto("/");
+  // Native shortcuts attach after hydration; the live clock is an existing readiness signal.
+  await expect(page.locator(".header-time")).toHaveText(/\d{2}:\d{2}:\d{2}/);
   await page.keyboard.press("Control+k");
   const input = page.getByRole("combobox");
   await expect(input).toBeFocused();

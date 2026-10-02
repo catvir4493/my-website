@@ -13,6 +13,14 @@ try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   await context.addInitScript(() => {
     sessionStorage.setItem("marcell:booted", "1");
+    let hardware = 16;
+    Object.defineProperty(navigator, "hardwareConcurrency", {
+      configurable: true,
+      get: () => hardware,
+    });
+    window.__coreSetHardware = (value) => {
+      hardware = value;
+    };
     window.__coreStats = { clears: 0, frames: 0, draws: 0, viewTransitions: 0 };
     for (const proto of [WebGLRenderingContext.prototype, WebGL2RenderingContext.prototype]) {
       const bind = proto.bindFramebuffer;
@@ -93,6 +101,11 @@ try {
   await page.waitForTimeout(600);
   samples.push(await sample("project hover / active core"));
   await page.mouse.move(10, 10);
+  await page.getByRole("button", { name: "Open interactive terminal" }).click();
+  await page.getByRole("textbox", { name: "Terminal command" }).waitFor();
+  await page.waitForTimeout(600);
+  samples.push(await sample("terminal / slowed core"));
+  await page.keyboard.press("Escape");
   await page.keyboard.press("Control+k");
   await page.getByRole("combobox").waitFor();
   await page.waitForTimeout(600);
@@ -141,11 +154,35 @@ try {
     null,
     { timeout: 15000 },
   );
+  // demand mode draws its final settled state when Quiet Mode commits.
+  await page.waitForTimeout(300);
   samples.push(await sample("quiet mode / untouched system"));
   await page.mouse.move(20, 20);
   await page.waitForFunction(
     () => document.querySelector(".system-root")?.dataset.quiet === "false",
   );
+  await page.evaluate(() => window.__coreSetHardware(4));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.setViewportSize({ width: 1439, height: 900 });
+  await page.waitForFunction(
+    () => document.querySelector(".system-root")?.dataset.quality === "medium",
+  );
+  await page.locator('.core-canvas [data-material-ready="true"]').waitFor();
+  await page.mouse.move(10, 10);
+  await page.waitForTimeout(1800);
+  samples.push(await sample("medium visible idle core"));
+  await page.locator(".core-project-node").first().hover();
+  await page.waitForTimeout(500);
+  samples.push(await sample("medium project hover"));
+  await page.mouse.move(10, 10);
+  await page.getByRole("button", { name: "Open interactive terminal" }).click();
+  await page.waitForTimeout(500);
+  samples.push(await sample("medium terminal"));
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Control+k");
+  await page.waitForTimeout(500);
+  samples.push(await sample("medium command palette"));
+  await page.keyboard.press("Escape");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("http://localhost:3000");
   await page.locator(".core-fallback").waitFor();

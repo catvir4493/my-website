@@ -1,20 +1,23 @@
-# MARCELL.OS v1.4.0 — MATERIAL FIDELITY PASS
+# MARCELL.OS v1.5.0 — OPTICS & PERCEPTUAL LIGHTING PASS
 
 Live site: https://marcell-os.vercel.app
 
-v1.4 在既有结构上加入集中材质预设、程序化微表面、解析式工作室反射、烟熏玻璃边缘响应、阳极氧化金属、陶瓷处理层、PCB 焊盘与接触阴影，并细化项目图和手机静态 Core 的表面响应。保留 v1.3 的启动、滚动焦点、项目交接与 Quiet Mode，以及现有内容、路由、GitHub 接口、终端、SEO 和教学算法。参见 [v1.4 材质实施与验证报告](docs/material-fidelity-v1.4.md)；[v1.3 报告](docs/cinematic-interaction-v1.3.md)和 [v1.2 报告](docs/visual-systems-v1.2.md)作为历史记录保留。
+v1.5 在 v1.4 材质系统上校准镜头、解析式棚灯形状、前后景衰减、局部反射与信号尾部，加入渐变材质 LOD 和 Shader 失败恢复。保留既有布局、项目事实、GitHub 接口、终端、教学实验、项目交接及手机静态 Core。参见 [v1.5 光学实施与验证报告](docs/optics-lighting-v1.5.md)；[v1.4 材质报告](docs/material-fidelity-v1.4.md)、[v1.3 报告](docs/cinematic-interaction-v1.3.md)和 [v1.2 报告](docs/visual-systems-v1.2.md)作为历史记录保留。
 
 对运行中的生产构建进行视觉验证：
 
 ```powershell
-node scripts/visual-systems-qa.mjs http://localhost:3000 artifacts/v1.4
-node scripts/visual-systems-performance.mjs artifacts/v1.4
-node scripts/material-captures.mjs http://localhost:3000 artifacts/v1.4/after
-node scripts/material-resources.mjs http://localhost:3000 artifacts/v1.4
-node scripts/lighthouse-audit.mjs http://localhost:3000 artifacts/v1.4
+node scripts/visual-systems-qa.mjs http://localhost:3000 artifacts/v1.5
+node scripts/visual-systems-performance.mjs artifacts/v1.5
+node scripts/material-captures.mjs http://localhost:3000 artifacts/v1.5/after
+node scripts/material-resources.mjs http://localhost:3000 artifacts/v1.5
+node scripts/lighthouse-audit.mjs http://localhost:3000 artifacts/v1.5
+node scripts/optics-comparison.mjs artifacts/v1.5
 ```
 
-截图及测量记录写入忽略提交的 `artifacts/v1.4/`。性能脚本只统计默认帧缓冲的 Core 呈现帧，排除 PMREM / Transmission 的离屏绘制，不把浏览器 RAF 当作 Core 帧率。资源探针检查 GL 对象生命周期；不等于 GPU 内存字节，也不会显示为硬件遥测。已安装的 Playwright WebKit 用于 Safari 引擎验证，不能替代 Apple 设备上的原生 Safari 测试。
+截图及测量记录写入忽略提交的 `artifacts/v1.5/`。先在 v1.4 构建保存 `before/`，再在 v1.5 构建保存 `after/`，最后生成可拖动的 `comparison.html`。性能脚本只统计默认帧缓冲的 Core 呈现帧，不把浏览器 RAF 当作 Core 帧率。资源探针检查 GL 对象生命周期；不等于 GPU 内存字节，也不会显示为硬件遥测。Playwright WebKit 用于 Safari 引擎验证，不能替代 Apple 设备上的原生 Safari 测试。
+
+开发调试仅在 `npm run dev` 下启用：`/?debugLighting=1` 或 `/?debugMaterials=1`。可比较四种 FOV、独立灯光和材质；`&shaderFault=1` 注入实际编译失败来验证 v1.4 恢复。运行 `node scripts/optics-debug-qa.mjs` 保存调试截图与验证记录。生产构建忽略这些参数。
 
 面向 BME Computer Engineering 学生的个人工程作品集。v1.1 延续原有暗色 HUD、字体、页面结构与 Compute Core，补充真实项目案例、公开 GitHub 遥测、终端导航与教学实验。项目事实由作者提供；当前成果与未来工作分开显示，不推断未知日期、技术栈、使用人数或性能基准。
 

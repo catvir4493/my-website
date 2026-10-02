@@ -51,6 +51,24 @@ export function ProjectVisual({
         >
           <svg viewBox="0 0 500 280" fill="none">
             <defs>
+              <linearGradient id={`softbox-${id}`} x1="0" y1="0" x2=".4" y2="1">
+                <stop stopColor={kind === "game" ? "#d5ad73" : "#cbdeeb"} stopOpacity="0" />
+                <stop
+                  offset=".18"
+                  stopColor={kind === "game" ? "#d5ad73" : "#cbdeeb"}
+                  stopOpacity=".14"
+                />
+                <stop
+                  offset=".38"
+                  stopColor={kind === "game" ? "#d5ad73" : "#cbdeeb"}
+                  stopOpacity=".035"
+                />
+                <stop offset=".7" stopColor="#14212e" stopOpacity="0" />
+              </linearGradient>
+              <radialGradient id={`stone-contact-${id}`}>
+                <stop stopColor="#02060a" stopOpacity=".8" />
+                <stop offset="1" stopColor="#02060a" stopOpacity="0" />
+              </radialGradient>
               <pattern id={`grid-${id}`} width="25" height="25" patternUnits="userSpaceOnUse">
                 <path d="M25 0H0V25" stroke="currentColor" strokeOpacity=".07" />
               </pattern>
@@ -85,6 +103,15 @@ export function ProjectVisual({
               {kind === "vision" && (
                 <>
                   <rect
+                    className="optical-sensor optical-reflection"
+                    x="33"
+                    y="47"
+                    width="287"
+                    height="177"
+                    rx="2"
+                    fill={`url(#softbox-${id})`}
+                  />
+                  <rect
                     x="32"
                     y="46"
                     width="290"
@@ -104,10 +131,32 @@ export function ProjectVisual({
                     stroke="#9ec5df"
                     strokeOpacity=".12"
                   />
+                  <path
+                    className="optical-reflection"
+                    d="M47 56H301M48 61H250"
+                    stroke="#beddeb"
+                    strokeOpacity=".16"
+                  />
+                  <ellipse
+                    className="optical-reflection"
+                    cx="283"
+                    cy="66"
+                    rx="17"
+                    ry="5"
+                    stroke="#c6dce6"
+                    strokeOpacity=".19"
+                  />
+                  <path d="M318 72V207" stroke="#03080d" strokeOpacity=".75" />
                 </>
               )}
               {kind === "travel" && (
                 <>
+                  <path
+                    className="optical-rear-route"
+                    d="M85 160C128 31 318 31 387 132"
+                    stroke="#73a5ad"
+                    strokeWidth="3"
+                  />
                   <rect
                     x="36"
                     y="66"
@@ -125,6 +174,11 @@ export function ProjectVisual({
                     strokeOpacity=".12"
                   />
                   <path d="M50 56H310" stroke="#d9efec" strokeOpacity=".13" />
+                  <path
+                    className="optical-reflection"
+                    d="M51 59H307V86H51Z"
+                    fill={`url(#softbox-${id})`}
+                  />
                 </>
               )}
               {kind === "game" && (
@@ -139,6 +193,16 @@ export function ProjectVisual({
                     stroke={`url(#edge-${id})`}
                   />
                   <path d="M27 59H471" stroke="#d9bc93" strokeOpacity=".12" />
+                  <path
+                    className="optical-found-edge"
+                    d="M26 74V218M37 60H184M35 63V101"
+                    strokeWidth="1.3"
+                  />
+                  <path
+                    className="optical-reflection"
+                    d="M27 62H190V222H27Z"
+                    fill={`url(#softbox-${id})`}
+                  />
                   <path d="M27 234H473" stroke="#03080a" strokeOpacity=".55" />
                 </>
               )}
@@ -155,6 +219,14 @@ export function ProjectVisual({
                   />
                   <path d="M34 64H198M33 66V228" stroke="#b0c1cf" strokeOpacity=".14" />
                   <path d="M34 230H198" stroke="#02070b" strokeOpacity=".7" />
+                  <rect
+                    className="optical-reflection"
+                    x="33"
+                    y="64"
+                    width="166"
+                    height="164"
+                    fill={`url(#softbox-${id})`}
+                  />
                 </>
               )}
             </g>
@@ -336,6 +408,26 @@ export function ProjectVisual({
                         key={index}
                         d={`M${index * 11.5} 0V161M0 ${index * 11.5}H161`}
                         opacity=".24"
+                      />
+                    ))}
+                    {[
+                      [7, 7],
+                      [8, 8],
+                      [6, 7],
+                      [9, 9],
+                      [5, 7],
+                      [7, 8],
+                      [4, 7],
+                      [6, 8],
+                    ].map(([x, y], index) => (
+                      <ellipse
+                        key={`shadow-${index}`}
+                        cx={x * 11.5 + 0.6}
+                        cy={y * 11.5 + 1.3}
+                        rx="6.2"
+                        ry="4.5"
+                        fill={`url(#stone-contact-${id})`}
+                        stroke="none"
                       />
                     ))}
                     {[

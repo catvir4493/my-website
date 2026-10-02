@@ -32,8 +32,14 @@ try {
     await page.goto(new URL(route, base).href, { waitUntil: "networkidle" });
     await page.locator("h1").waitFor();
     await page.evaluate(() => document.fonts.ready);
-    if (route === "/") await page.locator(".core-canvas canvas").waitFor();
+    if (route === "/") await page.locator('.core-canvas [data-material-ready="true"]').waitFor();
     await page.waitForTimeout(1200);
+    // Resolve both diagram versions to the same complete illustrative state.
+    await page.evaluate(() =>
+      document
+        .querySelectorAll(".project-visual")
+        .forEach((element) => element.setAttribute("data-play", "static")),
+    );
     const name = route === "/" ? "home" : route.slice(1).replaceAll("/", "-");
     await page.screenshot({ path: `${output}/${name}.png` });
     if (route === "/")

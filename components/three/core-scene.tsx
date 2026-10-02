@@ -1,6 +1,15 @@
 "use client";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   CanvasTexture,
   ACESFilmicToneMapping,
@@ -9,7 +18,8 @@ import {
   Object3D,
   Vector3,
   type Group,
-  type Mesh,
+  PerspectiveCamera,
+  MathUtils,
   type InstancedMesh,
   type DirectionalLight,
   type BufferAttribute,
@@ -19,6 +29,23 @@ import { createCoreMaterials, type CoreMaterials } from "@/lib/materials/library
 import { AcrylicSupports, BeveledPlate, PCBContacts } from "./core-surfaces";
 import { MaterialRenderer } from "./material-renderer";
 import { CoreFallback } from "./core-fallback";
+import {
+  cameraDistance,
+  OPTICS,
+  type OpticsDebugSettings,
+  type OpticsTelemetry,
+  type OpticsFocus,
+} from "@/lib/optics";
+
+const OpticsDebug =
+  process.env.NODE_ENV === "development"
+    ? dynamic(() => import("./optics-debug"), { ssr: false })
+    : null;
+const subscribeQuery = (callback: () => void) => {
+  window.addEventListener("popstate", callback);
+  return () => window.removeEventListener("popstate", callback);
+};
+const querySnapshot = () => (process.env.NODE_ENV === "development" ? window.location.search : "");
 
 function createLabel(layer: "pcb" | "etch") {
   const canvas = document.createElement("canvas");
@@ -265,23 +292,35 @@ function ComputeCore({
   tint,
   quality,
   commandMode,
+  advanced,
+  shaderFault,
+  debug,
+  telemetryRef,
 }: {
   paused: boolean;
   signal: string | null;
   tint: string;
   quality: VisualQuality;
   commandMode: boolean;
+  advanced: boolean;
+  shaderFault: boolean;
+  debug: OpticsDebugSettings;
+  telemetryRef: React.RefObject<OpticsTelemetry>;
 }) {
   const group = useRef<Group>(null);
   const rings = useRef<Group>(null);
   const processing = useRef<Group>(null);
   const keyLight = useRef<DirectionalLight>(null);
-  const pulses = useRef<(Mesh | null)[]>([]);
+  const pulses = useRef<InstancedMesh>(null);
+  const pulseDummy = useMemo(() => new Object3D(), []);
   const clickUntil = useRef(0);
   const activeTime = useRef(0);
   const activity = useRef(Array.from({ length: 3 }, () => ({ next: 0, start: -10 })));
   const lightSweep = useRef({ next: 0, start: -10 });
-  const materials = useMemo(() => createCoreMaterials(quality), [quality]);
+  const materials = useMemo(
+    () => createCoreMaterials(quality, advanced, shaderFault),
+    [quality, advanced, shaderFault],
+  );
   const animatedMaterials = useRef<CoreMaterials | null>(null);
   useLayoutEffect(() => {
     animatedMaterials.current = materials;
@@ -321,6 +360,45 @@ function ComputeCore({
     materials.trace.emissive.copy(color);
   }, [materials, color]);
   const energized = active || !!signal;
+  useLayoutEffect(() => {
+    const materials = animatedMaterials.current;
+    if (!materials) return;
+    materials.optics.bounceTint.value.copy(color);
+    materials.optics.cameraDepth.value = cameraDistance(debug.fov);
+    const channels = materials.optics.lightChannels.value;
+    channels.set(
+      ...(["key", "rim", "fill", "internal"].map((name) =>
+        debug.light === "all" || debug.light === name ? 1 : 0,
+      ) as [number, number, number, number]),
+    );
+    const solos = {
+      metal: [materials.metal, materials.contacts, materials.matte],
+      glass: [materials.glass, materials.acrylic],
+      pcb: [
+        materials.pcb,
+        materials.marking,
+        materials.ceramic,
+        materials.graphite,
+        materials.contactShadow,
+        materials.dieShadow,
+      ],
+      emissive: [materials.trace, materials.pulse],
+    };
+    for (const material of Object.values(materials)) {
+      if (material && typeof material === "object" && "isMaterial" in material)
+        material.visible =
+          debug.material === "all" || solos[debug.material].includes(material as never);
+    }
+    if (!pulses.current) return;
+    for (let index = 0; index < 9; index++) {
+      const strength = [1, 0.36, 0.1][index % 3];
+      pulses.current.setColorAt(index, new Color().setRGB(strength, strength, strength));
+      pulseDummy.scale.setScalar(0);
+      pulseDummy.updateMatrix();
+      pulses.current.setMatrixAt(index, pulseDummy.matrix);
+    }
+    pulses.current.instanceMatrix.needsUpdate = true;
+  }, [materials, color, debug, pulseDummy]);
   const particles = useMemo(() => {
     const count = quality === "high" ? 48 : 16;
     const positions = new Float32Array(count * 3);
@@ -334,9 +412,67 @@ function ComputeCore({
     }
     return positions;
   }, [quality]);
-  useFrame(({ pointer }, delta) => {
+  useFrame(({ pointer, camera, size }, delta) => {
     const materials = animatedMaterials.current;
-    if (!group.current || !materials || paused) return;
+    if (!group.current || !materials) return;
+    const focus: OpticsFocus = commandMode
+      ? "COMMAND_FOCUS"
+      : signal
+        ? "PROJECT_FOCUS"
+        : active
+          ? "CORE_FOCUS"
+          : "OVERVIEW";
+    const distance = cameraDistance(debug.fov);
+    if (camera instanceof PerspectiveCamera) {
+      const targetDistance =
+        distance *
+        (1 -
+          (!debug.freeze && (focus === "CORE_FOCUS" || focus === "PROJECT_FOCUS")
+            ? OPTICS.breathing
+            : 0));
+      const blend = debug.freeze ? 1 : Math.min(delta * 2.5, 1);
+      camera.position.z += (targetDistance - camera.position.z) * blend;
+      camera.position.x +=
+        ((debug.freeze || commandMode ? 0 : pointer.x * OPTICS.cameraParallax) -
+          camera.position.x) *
+        blend;
+      camera.position.y +=
+        ((debug.freeze || commandMode ? 0 : pointer.y * OPTICS.cameraParallax) -
+          camera.position.y) *
+        blend;
+      camera.lookAt(0, 0, 0);
+      if (camera.fov !== debug.fov) {
+        camera.fov = debug.fov;
+        camera.updateProjectionMatrix();
+      }
+    }
+    const pixelScale =
+      size.height / (2 * Math.tan((debug.fov * Math.PI) / 360) * camera.position.z);
+    const detail = MathUtils.smoothstep(pixelScale, 65, 115);
+    materials.optics.cameraDepth.value = camera.position.z;
+    materials.optics.internalWorldPosition.value
+      .set(0, 0, 0.41)
+      .applyMatrix4(group.current.matrixWorld);
+    const elapsed = activeTime.current;
+    const gain = debug.freeze || !advanced ? 1 : MathUtils.smoothstep(elapsed, 0.25, 1.15);
+    materials.optics.opticalGain.value = gain;
+    materials.optics.materialDetailLevel.value =
+      detail * (debug.freeze ? 1 : MathUtils.smoothstep(elapsed, 0.55, 1.35));
+    materials.etching.opacity = 0.86 * (0.65 + detail * 0.35);
+    materials.marking.color.setScalar(0.75 + detail * 0.25);
+    telemetryRef.current = {
+      fov: debug.fov,
+      position: camera.position.toArray(),
+      focus,
+      detail,
+      stage: gain,
+    };
+    if (debug.freeze) {
+      group.current.rotation.set(0.15, -0.34, -0.16);
+      group.current.position.y = 0;
+      rings.current?.rotation.set(0.35, 0, -0.2);
+    }
+    if (paused || debug.freeze) return;
     // Advance only while rendering. Resuming a quiet/hidden scene cannot jump its timeline.
     activeTime.current += Math.min(delta, 0.1);
     const t = activeTime.current;
@@ -369,33 +505,62 @@ function ComputeCore({
       keyLight.current.position.x = 2.5 + pointer.x * 0.22 + materials.sweep.value * 0.28;
       keyLight.current.position.y = 4 + pointer.y * 0.14;
     }
-    pulses.current.forEach((pulse, index) => {
-      if (!pulse) return;
-      const schedule = activity.current[index];
+    let anyPulse = false;
+    activity.current.forEach((schedule, index) => {
+      if (!pulses.current) return;
       if (!schedule.next) schedule.next = t + 2 + Math.random() * 5;
       if (t >= schedule.next && !commandMode) {
         schedule.start = t;
         schedule.next = t + 2 + Math.random() * 5;
       }
-      const progress = (t - schedule.start) / (energized || clicked ? 1.4 : 1.8);
-      pulse.visible = progress >= 0 && progress < 1 && !commandMode;
-      if (!pulse.visible) return;
+      const duration = [OPTICS.dataDuration, OPTICS.controlDuration, OPTICS.statusDuration][index];
+      const progress = (t - schedule.start) / (duration * (energized || clicked ? 0.88 : 1));
+      const visible = progress >= 0 && progress < 1 && !commandMode;
+      anyPulse ||= visible;
       const points = paths[index];
-      const segment = Math.min(2, Math.floor(progress * 3));
-      pulse.position.lerpVectors(points[segment], points[segment + 1], progress * 3 - segment);
+      for (let tail = 0; tail < 3; tail++) {
+        const sample = Math.max(0, progress - tail * 0.034);
+        const segment = Math.max(0, Math.min(2, Math.floor(sample * 3)));
+        pulseDummy.position.lerpVectors(
+          points[segment],
+          points[segment + 1],
+          Math.min(1, sample * 3 - segment),
+        );
+        pulseDummy.scale.setScalar(visible && sample < 1 ? [1, 0.68, 0.44][tail] : 0);
+        pulseDummy.updateMatrix();
+        pulses.current.setMatrixAt(index * 3 + tail, pulseDummy.matrix);
+      }
     });
+    if (pulses.current) {
+      pulses.current.visible = anyPulse;
+      pulses.current.instanceMatrix.needsUpdate = true;
+    }
   });
   return (
     <>
       <FrameCadence
-        paused={paused}
+        paused={paused || debug.freeze}
         interval={commandMode ? 100 : quality === "high" && energized ? 33 : 50}
       />
-      <hemisphereLight args={["#adbcc8", "#182025", 0.8]} />
-      <directionalLight ref={keyLight} position={[2.5, 4, 5]} intensity={2.5} color="#cadfe4" />
-      <directionalLight position={[-4, -1, 3]} intensity={0.85} color="#a6b1c0" />
-      <directionalLight position={[3, -2, -1]} intensity={0.65} color="#9487b1" />
-      <pointLight position={[-2, 1, 2]} intensity={energized ? 1.4 : 0.85} color={color} />
+      <hemisphereLight
+        args={["#adbcc8", "#111920", debug.light === "all" || debug.light === "fill" ? 0.6 : 0]}
+      />
+      <directionalLight
+        ref={keyLight}
+        position={[2.5, 4, 5]}
+        intensity={debug.light === "all" || debug.light === "key" ? OPTICS.key : 0}
+        color="#cadfe4"
+      />
+      <directionalLight
+        position={[-4, -1, 3]}
+        intensity={debug.light === "all" || debug.light === "fill" ? OPTICS.fill : 0}
+        color="#a6b1c0"
+      />
+      <directionalLight
+        position={[3, -2, -1]}
+        intensity={debug.light === "all" || debug.light === "rim" ? OPTICS.rim : 0}
+        color="#9487b1"
+      />
       <group
         ref={group}
         rotation={[0.15, -0.34, -0.16]}
@@ -405,6 +570,17 @@ function ComputeCore({
           clickUntil.current = performance.now() + 450;
         }}
       >
+        <pointLight
+          position={[0, 0, 0.41]}
+          intensity={
+            debug.light === "all" || debug.light === "internal"
+              ? OPTICS.internal * (energized ? 1.25 : 1)
+              : 0
+          }
+          distance={1.5}
+          decay={2}
+          color={color}
+        />
         <BeveledPlate width={2.2} height={2.2} depth={0.22} material={materials.metal} />
         <mesh position={[0, 0, 0.13]}>
           <boxGeometry args={[2.03, 2.03, 0.05]} />
@@ -424,7 +600,7 @@ function ComputeCore({
         </group>
         <mesh position={[0, 0, 0.35]}>
           <planeGeometry args={[0.94, 0.91]} />
-          <primitive object={materials.contactShadow} attach="material" dispose={null} />
+          <primitive object={materials.dieShadow} attach="material" dispose={null} />
         </mesh>
         <BeveledPlate
           width={0.83}
@@ -439,7 +615,7 @@ function ComputeCore({
           <ringGeometry args={[0.61, 0.618, 4]} />
           <primitive object={materials.trace} attach="material" dispose={null} />
         </mesh>
-        <mesh position={[0, 0, 0.53]}>
+        <mesh position={[0, 0, 0.53]} renderOrder={1}>
           <boxGeometry args={[1.96, 1.96, 0.06]} />
           <primitive object={materials.glass} attach="material" dispose={null} />
         </mesh>
@@ -447,7 +623,7 @@ function ComputeCore({
           <planeGeometry args={[1.87, 1.87]} />
           <primitive object={materials.marking} attach="material" dispose={null} />
         </mesh>
-        <mesh position={[0, 0, 0.572]}>
+        <mesh position={[0, 0, 0.572]} renderOrder={2}>
           <planeGeometry args={[1.87, 1.87]} />
           <primitive object={materials.etching} attach="material" dispose={null} />
         </mesh>
@@ -460,19 +636,17 @@ function ComputeCore({
               args={[tracePositions, 3]}
             />
           </bufferGeometry>
-          <lineBasicMaterial color={color} transparent opacity={energized ? 0.55 : 0.25} />
+          <lineBasicMaterial
+            color={color}
+            transparent
+            depthWrite={false}
+            opacity={energized ? 0.55 : 0.25}
+          />
         </lineSegments>
-        {[0, 1, 2].map((index) => (
-          <mesh
-            key={`pulse-${index}`}
-            ref={(element) => {
-              pulses.current[index] = element;
-            }}
-          >
-            <sphereGeometry args={[0.023, 8, 8]} />
-            <primitive object={materials.trace} attach="material" dispose={null} />
-          </mesh>
-        ))}
+        <instancedMesh ref={pulses} args={[undefined, undefined, 9]} frustumCulled={false}>
+          <sphereGeometry args={[0.023, 8, 8]} />
+          <primitive object={materials.pulse} attach="material" dispose={null} />
+        </instancedMesh>
         {[-1, 1].flatMap((x) =>
           [-1, 1].map((y) => (
             <mesh
@@ -493,15 +667,15 @@ function ComputeCore({
               <torusGeometry
                 args={[radius, i === 0 ? 0.006 : 0.003, 4, 96, Math.PI * (i === 1 ? 1.65 : 1.9)]}
               />
-              <meshBasicMaterial
-                color={signal ? tint : i === 1 ? "#8992bb" : "#62bed0"}
-                transparent
-                opacity={i === 0 ? 0.4 : 0.18}
+              <primitive
+                object={i === 0 ? materials.orbitNear : materials.orbitFar}
+                attach="material"
+                dispose={null}
               />
             </mesh>
             <mesh position={[radius, 0, 0]}>
               <sphereGeometry args={[0.029, 8, 8]} />
-              <meshBasicMaterial color="#b7f9ff" />
+              <primitive object={materials.orbitNear} attach="material" dispose={null} />
             </mesh>
           </group>
         ))}
@@ -510,7 +684,14 @@ function ComputeCore({
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[particles, 3]} />
         </bufferGeometry>
-        <pointsMaterial size={0.013} color="#8db6c1" transparent opacity={0.4} sizeAttenuation />
+        <pointsMaterial
+          size={0.013}
+          color="#8db6c1"
+          transparent
+          opacity={0.4}
+          depthWrite={false}
+          sizeAttenuation
+        />
       </points>
     </>
   );
@@ -530,13 +711,42 @@ export default function CoreScene({
   commandMode: boolean;
 }) {
   const [prepared, setPrepared] = useState(false);
+  const [mode, setMode] = useState<"optics" | "legacy" | "static">("optics");
+  const query = useSyncExternalStore(subscribeQuery, querySnapshot, () => "");
+  const debugEnabled =
+    process.env.NODE_ENV === "development" && /debug(?:Lighting|Materials)=1/.test(query);
+  const [debug, setDebug] = useState<OpticsDebugSettings>({
+    fov: OPTICS.fov,
+    light: "all",
+    material: "all",
+    freeze: false,
+  });
+  const telemetry = useRef<OpticsTelemetry>({
+    fov: OPTICS.fov,
+    position: [0, 0, cameraDistance(OPTICS.fov)],
+    focus: "OVERVIEW",
+    detail: 0,
+    stage: 0,
+  });
   const markReady = useCallback(() => setPrepared(true), []);
+  const recover = useCallback(() => {
+    setPrepared(false);
+    setMode((current) => (current === "optics" ? "legacy" : "static"));
+  }, []);
+  if (mode === "static") return <CoreFallback />;
   return (
     <>
       <Canvas
         style={{ opacity: prepared ? 1 : 0 }}
         data-material-ready={prepared}
-        camera={{ position: [0, 0, 6.6], fov: 45 }}
+        data-optics-mode={mode}
+        data-camera-fov={debug.fov}
+        camera={{
+          position: [0, 0, cameraDistance(OPTICS.fov)],
+          fov: OPTICS.fov,
+          near: OPTICS.near,
+          far: OPTICS.far,
+        }}
         dpr={[1, quality === "high" ? 1.5 : 1.25]}
         frameloop="demand"
         gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
@@ -552,10 +762,23 @@ export default function CoreScene({
           tint={color}
           quality={quality}
           commandMode={commandMode}
+          advanced={mode === "optics"}
+          shaderFault={debugEnabled && query.includes("shaderFault=1")}
+          debug={debug}
+          telemetryRef={telemetry}
         />
-        <MaterialRenderer quality={quality} onReady={markReady} />
+        <MaterialRenderer quality={quality} mode={mode} onReady={markReady} onFault={recover} />
       </Canvas>
       {!prepared && <CoreFallback />}
+      {debugEnabled && OpticsDebug && (
+        <OpticsDebug
+          settings={debug}
+          onChange={setDebug}
+          telemetry={telemetry}
+          quality={quality}
+          mode={mode}
+        />
+      )}
     </>
   );
 }

@@ -18,6 +18,36 @@ export function VisualEnvironment() {
     (item) => item.slug === signal || pathname === `/projects/${item.slug}`,
   );
   useEffect(() => {
+    const root = document.querySelector<HTMLElement>(".system-root");
+    if (!root) return;
+    const base =
+      commandMode || shellMode
+        ? "COMMAND_FOCUS"
+        : pathname === "/lab"
+          ? "LAB_FOCUS"
+          : project
+            ? "PROJECT_FOCUS"
+            : "OVERVIEW";
+    const focus = (event: Event) => {
+      if (commandMode || shellMode || dormant || quality === "low") return;
+      const target = event.target instanceof Element ? event.target : null;
+      root.dataset.opticsFocus = target?.closest(".core-canvas")
+        ? "CORE_FOCUS"
+        : target?.closest(".project-card, .project-detail-visual, .core-project-node")
+          ? "PROJECT_FOCUS"
+          : target?.closest(".experiment-panel")
+            ? "LAB_FOCUS"
+            : base;
+    };
+    root.dataset.opticsFocus = base;
+    document.addEventListener("pointerover", focus);
+    document.addEventListener("focusin", focus);
+    return () => {
+      document.removeEventListener("pointerover", focus);
+      document.removeEventListener("focusin", focus);
+    };
+  }, [commandMode, shellMode, dormant, quality, pathname, project]);
+  useEffect(() => {
     const environment = ref.current;
     if (environment)
       environment.dataset.section =

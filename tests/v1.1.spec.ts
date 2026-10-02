@@ -103,7 +103,7 @@ test("heap simulation distinguishes total free space from contiguous capacity an
 });
 
 test("terminal commands remain a predefined navigation allowlist", () => {
-  expect(runCommand("neofetch").lines.join(" ")).toContain("v1.4.0");
+  expect(runCommand("neofetch").lines.join(" ")).toContain("v1.5.0");
   expect(runCommand("neofetch").lines.join(" ")).not.toMatch(/uptime|age/i);
   expect(runCommand("projects --all").lines.join(" ")).toContain("CameraX");
   for (const project of projects)

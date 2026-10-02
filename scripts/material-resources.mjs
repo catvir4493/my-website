@@ -69,9 +69,19 @@ try {
       gl.uniform3f = (location, x, y, z) =>
         uniform(
           location,
-          ...(window.__disableEmissive && locations.get(location) === "emissive"
+          ...(window.__disableEmissive &&
+          /^(emissive|pointLights\[\d+\]\.color)$/.test(locations.get(location) || "")
             ? [0, 0, 0]
             : [x, y, z]),
+        );
+      const uniform4 = gl.uniform4f.bind(gl);
+      gl.uniform4f = (location, x, y, z, w) =>
+        uniform4(
+          location,
+          x,
+          y,
+          z,
+          window.__disableEmissive && locations.get(location) === "lightChannels" ? 0 : w,
         );
       return gl;
     };
@@ -95,6 +105,10 @@ try {
   };
   await page.goto(base);
   await expect(page.locator(".core-canvas canvas")).toBeVisible();
+  await expect(page.locator(".core-canvas [data-material-ready]")).toHaveAttribute(
+    "data-material-ready",
+    "true",
+  );
   await page.waitForTimeout(2000);
   const initial = await snapshot("high initial");
   for (let index = 0; index < 3; index++) {

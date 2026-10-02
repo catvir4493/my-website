@@ -45,8 +45,13 @@ try {
       const response = await page.goto(new URL(route, baseURL).href);
       await page.locator("h1").waitFor();
       await page.evaluate(() => document.fonts.ready);
-      if (route === "/" && viewport.width > 760)
-        await page.locator(".core-canvas canvas").waitFor();
+      if (route === "/" && viewport.width > 760) {
+        await page.locator('.core-canvas [data-material-ready="true"]').waitFor();
+        assert.equal(
+          await page.locator(".core-canvas [data-optics-mode]").getAttribute("data-optics-mode"),
+          "optics",
+        );
+      }
       await page.waitForTimeout(650);
       const slug = route === "/" ? "home" : route.slice(1).replaceAll("/", "-");
       await page.screenshot({ path: `${output}/${viewport.name}-${slug}-viewport.png` });
@@ -176,6 +181,13 @@ if (existsSync(webkit.executablePath())) {
         await page
           .locator(viewport.width > 760 ? ".core-canvas canvas" : ".core-fallback")
           .waitFor();
+        if (viewport.width > 760) {
+          await page.locator('.core-canvas [data-material-ready="true"]').waitFor();
+          assert.equal(
+            await page.locator(".core-canvas [data-optics-mode]").getAttribute("data-optics-mode"),
+            "optics",
+          );
+        }
         materialModes.push({
           viewport: viewport.width,
           quality: await page.locator(".system-root").getAttribute("data-quality"),
@@ -210,10 +222,57 @@ if (existsSync(webkit.executablePath())) {
     await page.locator("h1").filter({ hasText: "Vision Navigation" }).waitFor();
     await context.close();
   }
+  const medium = await safari.newContext({ viewport: { width: 1366, height: 768 } });
+  await medium.addInitScript(() => {
+    sessionStorage.setItem("marcell:booted", "1");
+    Object.defineProperty(navigator, "hardwareConcurrency", { get: () => 4 });
+  });
+  const mediumPage = await medium.newPage();
+  mediumPage.on("pageerror", (error) => errors.push(error.message));
+  mediumPage.on("console", (message) => {
+    if (
+      message.type() === "error" &&
+      /THREE.WebGLProgram|GL_INVALID|VALIDATE_STATUS|shader error/i.test(message.text())
+    )
+      errors.push(message.text());
+  });
+  await mediumPage.goto(baseURL, { waitUntil: "networkidle" });
+  await mediumPage.locator('.core-canvas [data-material-ready="true"]').waitFor();
+  assert.equal(
+    await mediumPage.locator(".core-canvas [data-optics-mode]").getAttribute("data-optics-mode"),
+    "optics",
+  );
+  assert.equal(await mediumPage.locator(".system-root").getAttribute("data-quality"), "medium");
+  await mediumPage.screenshot({ path: `${output}/webkit-medium-home.png` });
+  materialModes.push({ viewport: 1366, quality: "medium" });
+  for (const route of ["/projects/vision-navigation", "/lab"]) {
+    await mediumPage.locator(`a[href="${route}"]:visible`).first().click();
+    await mediumPage.waitForURL(new URL(route, baseURL).href);
+    await mediumPage.waitForLoadState("networkidle");
+    assert.equal(await mediumPage.locator("h1").count(), 1);
+    assert.equal(
+      await mediumPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+      true,
+    );
+  }
+  await medium.close();
+  const reducedWebkit = await safari.newContext({
+    viewport: { width: 1440, height: 900 },
+    reducedMotion: "reduce",
+  });
+  await reducedWebkit.addInitScript(() => sessionStorage.setItem("marcell:booted", "1"));
+  const reducedPage = await reducedWebkit.newPage();
+  reducedPage.on("pageerror", (error) => errors.push(error.message));
+  await reducedPage.goto(baseURL, { waitUntil: "networkidle" });
+  await reducedPage.locator(".core-fallback").waitFor();
+  assert.equal(await reducedPage.locator(".core-canvas canvas").count(), 0);
+  await reducedPage.screenshot({ path: `${output}/webkit-reduced-home.png` });
+  await reducedWebkit.close();
   webkitResult = {
     tested: true,
     viewports: [1440, 390],
-    routes: routes.length * 2,
+    routes: routes.length * 2 + 4,
+    reducedMotion: true,
     errors,
     materialModes,
     materialScreenshots,

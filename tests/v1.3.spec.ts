@@ -72,7 +72,7 @@ test("quiet mode rests visuals while keeping terminal and keyboard controls usab
   const input = page.getByRole("textbox", { name: "Terminal command" });
   await input.fill("neofetch");
   await input.press("Enter");
-  await expect(page.getByRole("dialog")).toContainText("v1.4.0");
+  await expect(page.getByRole("dialog")).toContainText("v1.5.0");
   await page.keyboard.press("Escape");
   await expect(page.locator(".system-root")).toHaveAttribute("data-shell-mode", "false");
 });
@@ -81,14 +81,15 @@ test("vision sidebar inherits successive stages from unchanged case-study sectio
   page,
 }) => {
   await page.goto("/projects/vision-navigation");
+  await expect(page.locator(".header-time")).toHaveText(/\d{2}:\d{2}:\d{2}/);
   for (let phase = 0; phase < 4; phase++) {
-    await page.locator(`[data-vision-phase="${phase}"]`).evaluate((element) =>
+    await page.locator(`main [data-vision-phase="${phase}"]`).evaluate((element) =>
       scrollTo({
         top: element.getBoundingClientRect().top + scrollY - innerHeight * 0.45 + 36,
         behavior: "instant",
       }),
     );
-    await expect(page.locator(".vision-story")).toHaveAttribute("data-phase", String(phase));
+    await expect(page.locator("main .vision-story")).toHaveAttribute("data-phase", String(phase));
   }
   await expect(page.locator(".vision-story-phase")).toHaveText("ACTIONABLE FEEDBACK");
   await expect(page.locator(".project-detail-copy")).toContainText("What works today.");

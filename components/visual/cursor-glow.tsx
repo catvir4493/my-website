@@ -31,6 +31,15 @@ export function CursorGlow() {
         const rect = surface.getBoundingClientRect();
         surface.style.setProperty("--cursor-x", `${event.clientX - rect.left}px`);
         surface.style.setProperty("--cursor-y", `${event.clientY - rect.top}px`);
+        // Normalize the softbox location, independent from the tiny cursor hotspot.
+        surface.style.setProperty(
+          "--reflection-x",
+          `${35 + ((event.clientX - rect.left) / rect.width) * 25}%`,
+        );
+        surface.style.setProperty(
+          "--reflection-y",
+          `${15 + ((event.clientY - rect.top) / rect.height) * 22}%`,
+        );
         surface.style.setProperty("--cursor-strength", "1");
       });
     };

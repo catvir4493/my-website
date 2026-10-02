@@ -62,7 +62,7 @@ test("small devices retain project surface cues and readable terminal output", a
   const input = page.getByRole("textbox", { name: "Terminal command" });
   await input.fill("neofetch");
   await input.press("Enter");
-  await expect(page.getByRole("dialog")).toContainText("v1.4.0");
+  await expect(page.getByRole("dialog")).toContainText("v1.5.0");
   await page.keyboard.press("Escape");
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(width).toBeLessThanOrEqual(390);

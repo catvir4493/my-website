@@ -9,7 +9,12 @@ export function VisionStory() {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const element = ref.current;
-    const sections = [...document.querySelectorAll<HTMLElement>("[data-vision-phase]")];
+    // Scope to this case study: streamed, not-yet-mounted segments may coexist in DOM.
+    const sections = [
+      ...(element
+        ?.closest(".project-detail-grid")
+        ?.querySelectorAll<HTMLElement>("[data-vision-phase]") || []),
+    ];
     if (!element || !sections.length) return;
     let frame = 0;
     let phase = -1;
