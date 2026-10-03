@@ -148,7 +148,18 @@ HIGH 保留现有完整 micro surface / Fresnel / optics；MEDIUM 保留同一�
 
 ## 24. 上线验证
 
-上线前等待本轮 Vercel 部署和原域名 smoke，完成后在本节记录部署、源代码提交、路由、交互和真实 GitHub 接口结果。
+已部署至 [原生产域名](https://marcell-os.vercel.app/)，Vercel inspect 确认 production / READY，原域名 alias 指向本轮部署。云端 `npm run build`、TypeScript 与13个静态输出全部成功。
+
+- 源代码提交：[68cf142](https://github.com/catvir4493/my-website/commit/68cf1423dae686343986e83c4f8e59c82b9c2feb)，已推送 origin/main；此前 v1.5 历史保留。
+- 部署 ID：`dpl_CDWiKNsMaq4ad8DiMHeda5ERZ4o4`；[Vercel deployment](https://vercel.com/marcell10/marcell-os/CDWiKNsMaq4ad8DiMHeda5ERZ4o4)。部署 URL：`https://marcell-6zgsvkzhv-marcell10.vercel.app`。
+- 线上 smoke 开始时间：2026-10-03 00:04:43 UTC。`graphics-production-smoke.mjs` 直接访问原域名，不使用 mock GitHub。
+- 1440×900 / DPR1.25、840×849 / DPR1.75、390×844 / DPR2，分别验证首页、archive、四个项目详情及 Lab，共21次路由访问：全部200、无横向溢出、版本和 release label 正确。
+- 三种尺寸均通过 Terminal neofetch、Palette fuzzy search / keyboard Enter、Core keyboard navigation、项目卡片导航、memory malloc / free 和 pathfinding Step。
+- 桌面 / Compact 实测 HIGH + Worker probe；普通手机 Phone + MEDIUM + deferred probe + 独立静态策略。线上 debug + forced HIGH + reduced motion：同材质光学正常，Core frozen，实际 WebGL DPR1.5。
+- `/api/github` 返回200、`connected`、真实账号 `catvir4493`。page / console errors为空。
+- 线上截图与完整断言记录：`artifacts/v1.5.1/deployment/`。截图 / smoke JSON 只作本地验收证据，不上传生产包。
+
+完整报告的部署记录另建独立文档提交推送；生产应用代码对应上述68cf142，文档提交不改变运行时内容。
 
 ## 25. 真实硬件差异与验收
 
@@ -166,7 +177,7 @@ window.devicePixelRatio;
 
 ## 文件与产物
 
-新增：capabilities / profile、一次性 Worker、GraphicsDebug、cross-device.css、v1.5.1 tests、baseline / matrix / controls / comparison 脚本。修改：MotionProvider、Core / CoreScene、Cursor、CursorGlow、MagneticControls、VisualEnvironment、ProjectVisual、既有性能 / 资源 / QA 脚本和版本。
+新增：capabilities / profile、一次性 Worker、GraphicsDebug、cross-device.css、v1.5.1 tests、baseline / matrix / controls / comparison / production smoke 脚本。修改：MotionProvider、Core / CoreScene、Cursor、CursorGlow、MagneticControls、VisualEnvironment、ProjectVisual、既有性能 / 资源 / QA 脚本和版本。
 
 `artifacts/v1.5.1/comparison.html` 包含7组图片 / 滑块，支持直接拖动、方向键、Home / End；实际旧版截图在 before/。截图、JSON、Lighthouse、认证和缓存不进入 Git 或部署。历史 v1.2–v1.5 报告原样保留。
 
