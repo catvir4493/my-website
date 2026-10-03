@@ -35,7 +35,8 @@ try {
     const getContext = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (type, ...args) {
       const gl = getContext.call(this, type, ...args);
-      if (!gl || !/webgl/.test(type) || gl.__materialProbed) return gl;
+      if (!gl || this.dataset.graphicsProbe || !/webgl/.test(type) || gl.__materialProbed)
+        return gl;
       gl.__materialProbed = true;
       const entry = {
         live: { Texture: new Set(), Buffer: new Set(), Program: new Set(), Framebuffer: new Set() },
@@ -103,13 +104,15 @@ try {
     report.samples.push({ label, contexts: counts });
     return counts;
   };
-  await page.goto(base);
+  await page.goto(new URL("?quality=high", base).href);
   await expect(page.locator(".core-canvas canvas")).toBeVisible();
   await expect(page.locator(".core-canvas [data-material-ready]")).toHaveAttribute(
     "data-material-ready",
     "true",
   );
-  await page.waitForTimeout(2000);
+  // Sparse pulses upload their existing buffers only on first visible activation.
+  // Warm that one-time allocation before checking repeated hover/resource growth.
+  await page.waitForTimeout(8500);
   const initial = await snapshot("high initial");
   for (let index = 0; index < 3; index++) {
     for (const node of await page.locator(".core-project-node").all()) await node.hover();
@@ -128,26 +131,35 @@ try {
   await page.evaluate(() => {
     window.__disableEmissive = false;
   });
-  await page.setViewportSize({ width: 390, height: 844 });
+  for (const width of [840, 640, 390, 1919, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(page.locator(".system-root")).toHaveAttribute("data-quality", "high");
+    await expect(page.locator(".core-canvas canvas")).toBeVisible();
+  }
+  const resized = await snapshot("desktop input resize preserves renderer and material resources");
+  assert.equal(resized.length, initial.length, "resize does not create another WebGL context");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator(".core-canvas")).toHaveAttribute("data-core-mode", "frozen");
+  assert.equal((await snapshot("reduced motion retains same renderer")).length, initial.length);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.evaluate(() => history.pushState(null, "", "?quality=low"));
   await expect(page.locator(".core-fallback")).toBeVisible();
   await page.waitForTimeout(1200);
-  await page.screenshot({ path: `${output}/mobile-material-home.png` });
-  const mobile = await snapshot("low / mobile releases WebGL");
+  await page.screenshot({ path: `${output}/low-material-home.png` });
+  const released = await snapshot("explicit LOW releases WebGL");
   assert.ok(
-    mobile.every((entry) => entry.lost || Object.values(entry.live).every((value) => value <= 2)),
+    released.every((entry) => entry.lost || Object.values(entry.live).every((value) => value <= 2)),
     "old graphics resources are released",
   );
-  await page.evaluate(() => window.__setMaterialHardware(4));
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.evaluate(() => history.pushState(null, "", "?quality=medium"));
   await expect(page.locator(".system-root")).toHaveAttribute("data-quality", "medium");
-  await expect(page.locator(".core-canvas canvas")).toBeVisible();
+  await page.locator('[data-material-ready="true"]').waitFor();
   await page.waitForTimeout(1200);
   await page.locator(".core-canvas").screenshot({ path: `${output}/medium-material-core.png` });
   await snapshot("medium restored");
-  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => history.pushState(null, "", "?quality=low"));
   await expect(page.locator(".core-fallback")).toBeVisible();
-  await page.evaluate(() => window.__setMaterialHardware(16));
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.evaluate(() => history.pushState(null, "", "?quality=high"));
   await expect(page.locator(".system-root")).toHaveAttribute("data-quality", "high");
   await expect(page.locator(".core-canvas canvas")).toBeVisible();
   await page.waitForTimeout(1600);

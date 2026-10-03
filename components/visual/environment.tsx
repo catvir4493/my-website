@@ -12,7 +12,8 @@ import { projects } from "@/data/projects";
 export function VisualEnvironment() {
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const { quality, dormant, quiet, commandMode, shellMode } = useMotionPreferences();
+  const { quality, graphics, reducedMotion, dormant, quiet, commandMode, shellMode } =
+    useMotionPreferences();
   const { signal } = useProjectFocus();
   const project = projects.find(
     (item) => item.slug === signal || pathname === `/projects/${item.slug}`,
@@ -29,7 +30,7 @@ export function VisualEnvironment() {
             ? "PROJECT_FOCUS"
             : "OVERVIEW";
     const focus = (event: Event) => {
-      if (commandMode || shellMode || dormant || quality === "low") return;
+      if (commandMode || shellMode || dormant) return;
       const target = event.target instanceof Element ? event.target : null;
       root.dataset.opticsFocus = target?.closest(".core-canvas")
         ? "CORE_FOCUS"
@@ -46,13 +47,13 @@ export function VisualEnvironment() {
       document.removeEventListener("pointerover", focus);
       document.removeEventListener("focusin", focus);
     };
-  }, [commandMode, shellMode, dormant, quality, pathname, project]);
+  }, [commandMode, shellMode, dormant, pathname, project]);
   useEffect(() => {
     const environment = ref.current;
     if (environment)
       environment.dataset.section =
         pathname === "/" ? "home" : pathname === "/lab" ? "lab" : "projects";
-    if (!environment || dormant || quiet || commandMode || shellMode) return;
+    if (!environment || reducedMotion || dormant || quiet || commandMode || shellMode) return;
     let frame = 0;
     let x = 0;
     let y = 0;
@@ -75,7 +76,7 @@ export function VisualEnvironment() {
     };
     const draw = () => {
       frame = 0;
-      if (quality === "high") {
+      if (quality === "high" && graphics.pointerFine && graphics.hoverCapable) {
         environment.style.setProperty("--parallax-x", `${x}px`);
         environment.style.setProperty("--parallax-y", `${y}px`);
         environment.style.setProperty(
@@ -118,7 +119,7 @@ export function VisualEnvironment() {
       if (!frame) frame = requestAnimationFrame(draw);
     };
     const move = (event: PointerEvent) => {
-      if (quality !== "high") return;
+      if (quality !== "high" || !graphics.pointerFine || !graphics.hoverCapable) return;
       x = (event.clientX / window.innerWidth - 0.5) * 4;
       y = (event.clientY / window.innerHeight - 0.5) * 4;
       environment.style.setProperty("--ambient-camera-x", `${50 + x * 4}%`);
@@ -149,7 +150,17 @@ export function VisualEnvironment() {
       visual?.style.removeProperty("--parallax-x");
       visual?.style.removeProperty("--parallax-y");
     };
-  }, [quality, dormant, quiet, commandMode, shellMode, pathname]);
+  }, [
+    quality,
+    reducedMotion,
+    dormant,
+    quiet,
+    commandMode,
+    shellMode,
+    pathname,
+    graphics.pointerFine,
+    graphics.hoverCapable,
+  ]);
   useEffect(() => {
     const observed = new WeakSet<Element>();
     const observer = new IntersectionObserver(

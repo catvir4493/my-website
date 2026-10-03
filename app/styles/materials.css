@@ -188,9 +188,3 @@
 [data-quality="low"] .route-signal-line {
   filter: none;
 }
-@media (prefers-reduced-motion: reduce) {
-  .diagram-link,
-  .route-signal-line {
-    filter: none;
-  }
-}

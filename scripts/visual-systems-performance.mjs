@@ -11,7 +11,7 @@ const browser = await chromium.launch({
 });
 try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-  await context.addInitScript(() => {
+  const instrument = () => {
     sessionStorage.setItem("marcell:booted", "1");
     let hardware = 16;
     Object.defineProperty(navigator, "hardwareConcurrency", {
@@ -47,9 +47,10 @@ try {
         return original(...args);
       };
     }
-  });
-  const page = await context.newPage();
-  const session = await context.newCDPSession(page);
+  };
+  await context.addInitScript(instrument);
+  let page = await context.newPage();
+  let session = await context.newCDPSession(page);
   await session.send("Performance.enable");
   await page.goto("http://localhost:3000");
   await page.locator(".core-canvas canvas").waitFor();
@@ -97,9 +98,29 @@ try {
   }
   const samples = [];
   samples.push(await sample("visible idle core"));
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.waitForTimeout(400);
+  samples.push(await sample("reduced motion / frozen HIGH materials"));
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.waitForTimeout(200);
+
   await page.locator(".core-project-node").first().hover();
   await page.waitForTimeout(600);
   samples.push(await sample("project hover / active core"));
+  await session.send("Emulation.setDeviceMetricsOverride", {
+    width: 840,
+    height: 849,
+    deviceScaleFactor: 1.75,
+    mobile: false,
+  });
+  await page.mouse.move(10, 10);
+  await page.waitForTimeout(600);
+  samples.push(await sample("840x849 DPR1.75 compact HIGH idle"));
+  await page.locator(".core-project-node").first().hover();
+  await page.waitForTimeout(300);
+  samples.push(await sample("840x849 DPR1.75 compact HIGH project hover"));
+  await page.setViewportSize({ width: 1440, height: 900 });
+
   await page.mouse.move(10, 10);
   await page.getByRole("button", { name: "Open interactive terminal" }).click();
   await page.getByRole("textbox", { name: "Terminal command" }).waitFor();
@@ -161,9 +182,7 @@ try {
   await page.waitForFunction(
     () => document.querySelector(".system-root")?.dataset.quiet === "false",
   );
-  await page.evaluate(() => window.__coreSetHardware(4));
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.setViewportSize({ width: 1439, height: 900 });
+  await page.evaluate(() => history.pushState(null, "", "?quality=medium"));
   await page.waitForFunction(
     () => document.querySelector(".system-root")?.dataset.quality === "medium",
   );
@@ -183,11 +202,21 @@ try {
   await page.waitForTimeout(500);
   samples.push(await sample("medium command palette"));
   await page.keyboard.press("Escape");
-  await page.setViewportSize({ width: 390, height: 844 });
+  await context.close();
+  const mobileContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
+  });
+  await mobileContext.addInitScript(instrument);
+  page = await mobileContext.newPage();
+  session = await mobileContext.newCDPSession(page);
+  await session.send("Performance.enable");
   await page.goto("http://localhost:3000");
   await page.locator(".core-fallback").waitFor();
   await page.waitForTimeout(600);
-  samples.push(await sample("mobile static core"));
+  samples.push(await sample("mobile static core / touch-primary product policy"));
   const result = {
     browser: "Chromium / Edge headless",
     caveat:
@@ -197,7 +226,9 @@ try {
     sharedDiagramTransitionsObserved: diagramTransitions,
   };
   writeFileSync(`${output}/runtime-performance.json`, JSON.stringify(result, null, 2));
-  for (const item of samples.filter((item) => /offscreen|paused|hidden|quiet/.test(item.label)))
+  for (const item of samples.filter((item) =>
+    /offscreen|paused|hidden|quiet|frozen|static core/.test(item.label),
+  ))
     assert.equal(item.coreFramesPerSecond, 0, item.label);
   assert.ok(samples[0].coreFramesPerSecond <= 35, "core cadence remains capped");
   console.log(JSON.stringify(result, null, 2));

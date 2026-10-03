@@ -4,15 +4,17 @@ import { useMotionPreferences } from "@/components/ui/motion-provider";
 
 // Delegated input updates only: a maximum 4px attraction, no idle animation loop.
 export function MagneticControls() {
-  const { quality, dormant, quiet, commandMode, shellMode } = useMotionPreferences();
+  const { graphics, reducedMotion, dormant, quiet, commandMode, shellMode } =
+    useMotionPreferences();
   useEffect(() => {
     if (
-      quality !== "high" ||
+      reducedMotion ||
       dormant ||
       quiet ||
       commandMode ||
       shellMode ||
-      !matchMedia("(pointer: fine)").matches
+      !graphics.pointerFine ||
+      !graphics.hoverCapable
     )
       return;
     let current: HTMLElement | null = null;
@@ -54,6 +56,14 @@ export function MagneticControls() {
       window.removeEventListener("scroll", reset);
       document.removeEventListener("pointerleave", reset);
     };
-  }, [quality, dormant, quiet, commandMode, shellMode]);
+  }, [
+    reducedMotion,
+    dormant,
+    quiet,
+    commandMode,
+    shellMode,
+    graphics.pointerFine,
+    graphics.hoverCapable,
+  ]);
   return null;
 }

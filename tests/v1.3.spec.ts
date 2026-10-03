@@ -72,7 +72,7 @@ test("quiet mode rests visuals while keeping terminal and keyboard controls usab
   const input = page.getByRole("textbox", { name: "Terminal command" });
   await input.fill("neofetch");
   await input.press("Enter");
-  await expect(page.getByRole("dialog")).toContainText("v1.5.0");
+  await expect(page.getByRole("dialog")).toContainText("v1.5.1");
   await page.keyboard.press("Escape");
   await expect(page.locator(".system-root")).toHaveAttribute("data-shell-mode", "false");
 });
@@ -112,17 +112,16 @@ test("small diagrams draw one signal while project hero stages share a coherent 
   expect(await hero.evaluate((element) => element.getAnimations({ subtree: true }).length)).toBe(0);
 });
 
-test("mobile preserves project motifs without camera, custom cursor or WebGL", async ({ page }) => {
+test("small desktop windows preserve project motifs and input interactions", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await expect(page.locator(".core-fallback")).toBeVisible();
-  await expect(page.locator(".core-canvas canvas")).toHaveCount(0);
-  await expect(page.locator("html")).not.toHaveClass(/custom-cursor-enabled/);
+  await expect(page.locator(".core-canvas canvas")).toBeVisible();
+  await expect(page.locator("html")).toHaveClass(/custom-cursor-enabled/);
   await page.locator(".core-project-node").first().click();
   await expect(page.locator("h1")).toHaveText("Vision Navigation");
   await expect(page.locator(".project-detail-visual .project-visual")).toHaveAttribute(
     "data-play",
-    "once",
+    "loop",
   );
 });
 

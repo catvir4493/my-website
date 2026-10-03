@@ -29,7 +29,11 @@ try {
     { name: "ipad", width: 820, height: 1180 },
     { name: "mobile", width: 390, height: 844 },
   ]) {
-    const context = await browser.newContext({ viewport });
+    const context = await browser.newContext({
+      viewport,
+      hasTouch: viewport.name === "mobile",
+      isMobile: viewport.name === "mobile",
+    });
     await context.addInitScript(() => sessionStorage.setItem("marcell:booted", "1"));
     const page = await context.newPage();
     const errors = [];
@@ -117,8 +121,8 @@ try {
   await reduced.addInitScript(() => sessionStorage.setItem("marcell:booted", "1"));
   const page = await reduced.newPage();
   await page.goto(baseURL);
-  await page.locator(".core-fallback").waitFor();
-  assert.equal(await page.locator(".core-canvas canvas").count(), 0);
+  await page.locator('[data-material-ready="true"]').waitFor();
+  assert.equal(await page.locator(".core-canvas").getAttribute("data-core-mode"), "frozen");
   await page.screenshot({ path: `${output}/reduced-motion-home.png` });
   screenshots++;
   await reduced.close();
@@ -139,7 +143,7 @@ if (existsSync(webkit.executablePath())) {
     { width: 1440, height: 900 },
     { width: 390, height: 844 },
   ]) {
-    const context = await safari.newContext({ viewport });
+    const context = await safari.newContext({ viewport, hasTouch: viewport.width === 390 });
     await context.addInitScript(() => {
       sessionStorage.setItem("marcell:booted", "1");
       // Exercise the full material branch on desktop regardless of the CI host's CPU hint.
@@ -264,8 +268,8 @@ if (existsSync(webkit.executablePath())) {
   const reducedPage = await reducedWebkit.newPage();
   reducedPage.on("pageerror", (error) => errors.push(error.message));
   await reducedPage.goto(baseURL, { waitUntil: "networkidle" });
-  await reducedPage.locator(".core-fallback").waitFor();
-  assert.equal(await reducedPage.locator(".core-canvas canvas").count(), 0);
+  await reducedPage.locator('[data-material-ready="true"]').waitFor();
+  assert.equal(await reducedPage.locator(".core-canvas").getAttribute("data-core-mode"), "frozen");
   await reducedPage.screenshot({ path: `${output}/webkit-reduced-home.png` });
   await reducedWebkit.close();
   webkitResult = {

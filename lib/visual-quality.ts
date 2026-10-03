@@ -1,16 +1,5 @@
-export type VisualQuality = "high" | "medium" | "low";
-
-export function getVisualQuality(): VisualQuality {
-  if (window.matchMedia("(prefers-reduced-motion: reduce), (max-width: 760px)").matches)
-    return "low";
-  const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
-  return navigator.hardwareConcurrency <= 4 || connection?.saveData ? "medium" : "high";
-}
-
-export function subscribeVisualQuality(callback: () => void) {
-  const queries = ["(prefers-reduced-motion: reduce)", "(max-width: 760px)"].map((query) =>
-    window.matchMedia(query),
-  );
-  queries.forEach((query) => query.addEventListener("change", callback));
-  return () => queries.forEach((query) => query.removeEventListener("change", callback));
-}
+// Compatibility exports. Layout, input and motion never select material quality.
+export type { GraphicsQuality as VisualQuality } from "./graphics/capabilities";
+export { subscribeGraphicsProfile as subscribeVisualQuality } from "./graphics/profile";
+import { getGraphicsProfile } from "./graphics/profile";
+export const getVisualQuality = () => getGraphicsProfile().quality;

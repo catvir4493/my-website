@@ -275,6 +275,15 @@ const modePaths: Record<string, number[][][]> = {
   ],
 };
 
+function RenderResolution() {
+  const gl = useThree((state) => state.gl);
+  const dpr = useThree((state) => state.viewport.dpr);
+  useLayoutEffect(() => {
+    gl.domElement.setAttribute("data-actual-render-dpr", String(gl.getPixelRatio()));
+  }, [gl, dpr]);
+  return null;
+}
+
 function FrameCadence({ paused, interval }: { paused: boolean; interval: number }) {
   const invalidate = useThree((state) => state.invalidate);
   useEffect(() => {
@@ -288,6 +297,7 @@ function FrameCadence({ paused, interval }: { paused: boolean; interval: number 
 
 function ComputeCore({
   paused,
+  staticMotion,
   signal,
   tint,
   quality,
@@ -298,6 +308,7 @@ function ComputeCore({
   telemetryRef,
 }: {
   paused: boolean;
+  staticMotion: boolean;
   signal: string | null;
   tint: string;
   quality: VisualQuality;
@@ -427,17 +438,17 @@ function ComputeCore({
       const targetDistance =
         distance *
         (1 -
-          (!debug.freeze && (focus === "CORE_FOCUS" || focus === "PROJECT_FOCUS")
+          (!debug.freeze && !staticMotion && (focus === "CORE_FOCUS" || focus === "PROJECT_FOCUS")
             ? OPTICS.breathing
             : 0));
-      const blend = debug.freeze ? 1 : Math.min(delta * 2.5, 1);
+      const blend = debug.freeze || staticMotion ? 1 : Math.min(delta * 2.5, 1);
       camera.position.z += (targetDistance - camera.position.z) * blend;
       camera.position.x +=
-        ((debug.freeze || commandMode ? 0 : pointer.x * OPTICS.cameraParallax) -
+        ((debug.freeze || staticMotion || commandMode ? 0 : pointer.x * OPTICS.cameraParallax) -
           camera.position.x) *
         blend;
       camera.position.y +=
-        ((debug.freeze || commandMode ? 0 : pointer.y * OPTICS.cameraParallax) -
+        ((debug.freeze || staticMotion || commandMode ? 0 : pointer.y * OPTICS.cameraParallax) -
           camera.position.y) *
         blend;
       camera.lookAt(0, 0, 0);
@@ -448,16 +459,19 @@ function ComputeCore({
     }
     const pixelScale =
       size.height / (2 * Math.tan((debug.fov * Math.PI) / 360) * camera.position.z);
-    const detail = MathUtils.smoothstep(pixelScale, 65, 115);
+    // Preserve material identity in compact compositions; only genuinely tiny cores
+    // need to suppress subpixel surface detail. Resolution is controlled by DPR.
+    const detail = MathUtils.smoothstep(pixelScale, 40, 70);
     materials.optics.cameraDepth.value = camera.position.z;
     materials.optics.internalWorldPosition.value
       .set(0, 0, 0.41)
       .applyMatrix4(group.current.matrixWorld);
     const elapsed = activeTime.current;
-    const gain = debug.freeze || !advanced ? 1 : MathUtils.smoothstep(elapsed, 0.25, 1.15);
+    const gain =
+      debug.freeze || staticMotion || !advanced ? 1 : MathUtils.smoothstep(elapsed, 0.25, 1.15);
     materials.optics.opticalGain.value = gain;
     materials.optics.materialDetailLevel.value =
-      detail * (debug.freeze ? 1 : MathUtils.smoothstep(elapsed, 0.55, 1.35));
+      detail * (debug.freeze || staticMotion ? 1 : MathUtils.smoothstep(elapsed, 0.55, 1.35));
     materials.etching.opacity = 0.86 * (0.65 + detail * 0.35);
     materials.marking.color.setScalar(0.75 + detail * 0.25);
     telemetryRef.current = {
@@ -467,10 +481,16 @@ function ComputeCore({
       detail,
       stage: gain,
     };
-    if (debug.freeze) {
+    if (debug.freeze || staticMotion) {
       group.current.rotation.set(0.15, -0.34, -0.16);
       group.current.position.y = 0;
       rings.current?.rotation.set(0.35, 0, -0.2);
+      if (staticMotion) {
+        materials.sweep.value = 0;
+        materials.trace.emissiveIntensity = energized ? 0.48 : 0.2;
+        if (pulses.current) pulses.current.visible = false;
+        if (keyLight.current) keyLight.current.position.set(2.5, 4, 5);
+      }
     }
     if (paused || debug.freeze) return;
     // Advance only while rendering. Resuming a quiet/hidden scene cannot jump its timeline.
@@ -699,12 +719,16 @@ function ComputeCore({
 
 export default function CoreScene({
   paused,
+  staticMotion,
+  renderDpr,
   signal,
   color,
   quality,
   commandMode,
 }: {
   paused: boolean;
+  staticMotion: boolean;
+  renderDpr: number;
   signal: string | null;
   color: string;
   quality: VisualQuality;
@@ -741,13 +765,15 @@ export default function CoreScene({
         data-material-ready={prepared}
         data-optics-mode={mode}
         data-camera-fov={debug.fov}
+        data-render-dpr={renderDpr}
+        data-material-quality={quality}
         camera={{
           position: [0, 0, cameraDistance(OPTICS.fov)],
           fov: OPTICS.fov,
           near: OPTICS.near,
           far: OPTICS.far,
         }}
-        dpr={[1, quality === "high" ? 1.5 : 1.25]}
+        dpr={renderDpr}
         frameloop="demand"
         gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
         onCreated={({ gl }) => {
@@ -756,8 +782,10 @@ export default function CoreScene({
           gl.outputColorSpace = SRGBColorSpace;
         }}
       >
+        <RenderResolution />
         <ComputeCore
           paused={paused}
+          staticMotion={staticMotion}
           signal={signal}
           tint={color}
           quality={quality}

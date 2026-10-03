@@ -24,7 +24,7 @@ export function ProjectVisual({
   shared?: boolean;
 }) {
   const id = useId().replaceAll(":", "");
-  const { quality, paused, quiet, dormant, reducedMotion } = useMotionPreferences();
+  const { quality, graphics, paused, quiet, dormant, reducedMotion } = useMotionPreferences();
   return (
     <>
       {large && (
@@ -43,7 +43,7 @@ export function ProjectVisual({
           data-play={
             paused || quiet || dormant || reducedMotion
               ? "static"
-              : large && quality !== "low"
+              : large && quality !== "low" && !graphics.mobileStaticCorePolicy
                 ? "loop"
                 : "once"
           }

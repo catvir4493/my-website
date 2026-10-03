@@ -44,8 +44,8 @@ test("command and lab focus preserve keyboard controls and static reduced-motion
     );
   expect(animation).toBe(true);
   await page.goto("/");
-  await expect(page.locator(".core-canvas canvas")).toHaveCount(0);
-  await expect(page.locator(".core-fallback")).toBeVisible();
+  await expect(page.locator(".core-canvas")).toHaveAttribute("data-core-mode", "frozen");
+  await expect(page.locator(".core-canvas canvas")).toBeVisible();
   await page.locator(".core-project-node").last().focus();
   await page.keyboard.press("Enter");
   await expect(page.locator("h1")).toHaveText("Gomoku AI");

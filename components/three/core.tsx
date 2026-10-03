@@ -18,7 +18,8 @@ class CoreBoundary extends Component<{ children: ReactNode }, { failed: boolean 
   }
 }
 export function Core({ signal, color }: { signal: string | null; color: string }) {
-  const { dormant, lite, quality, commandMode, shellMode, quiet } = useMotionPreferences();
+  const { dormant, graphics, reducedMotion, quality, commandMode, shellMode, quiet } =
+    useMotionPreferences();
   const [visible, setVisible] = useState(true);
   const [inView, setInView] = useState(true);
   const container = useRef<HTMLDivElement>(null);
@@ -39,17 +40,35 @@ export function Core({ signal, color }: { signal: string | null; color: string }
       ref={container}
       className="core-canvas"
       data-signal={signal || "idle"}
+      data-core-mode={
+        graphics.coreWebgl
+          ? reducedMotion || dormant || quiet || !visible || !inView
+            ? "frozen"
+            : "active"
+          : "static"
+      }
+      data-static-policy={
+        graphics.mobileStaticCorePolicy
+          ? "touch-phone"
+          : !graphics.webgl2
+            ? "webgl-unavailable"
+            : quality === "low"
+              ? "low-quality"
+              : "none"
+      }
       data-system-state={commandMode || shellMode ? "FOCUS" : signal ? "ACTIVE" : "IDLE"}
       style={{ "--core-color": color } as React.CSSProperties}
       role="img"
       aria-label="Floating interactive processor surrounded by orbital data paths"
     >
       <CoreBoundary>
-        {lite ? (
+        {!graphics.ready || !graphics.coreWebgl ? (
           <CoreFallback />
         ) : (
           <CoreScene
-            paused={dormant || quiet || !visible || !inView}
+            paused={dormant || reducedMotion || quiet || !visible || !inView}
+            staticMotion={reducedMotion}
+            renderDpr={graphics.renderDpr}
             signal={signal}
             color={color}
             quality={quality}

@@ -51,8 +51,9 @@ test("reduced motion can be changed live without losing core navigation", async 
   await page.goto("/");
   await expect(page.locator(".core-canvas canvas")).toBeVisible();
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await expect(page.locator(".system-root")).toHaveAttribute("data-quality", "low");
-  await expect(page.locator(".core-fallback")).toBeVisible();
+  await expect(page.locator(".system-root")).toHaveAttribute("data-reduced-motion", "true");
+  await expect(page.locator(".core-canvas")).toHaveAttribute("data-core-mode", "frozen");
+  await expect(page.locator(".core-canvas canvas")).toBeVisible();
   await page.locator(".core-project-node").last().click();
   await expect(page.locator("h1")).toHaveText("Gomoku AI");
   await expect(page.locator(".route-signal")).toHaveCount(0);

@@ -6,10 +6,11 @@ import { useMotionPreferences } from "@/components/ui/motion-provider";
 export function Cursor() {
   const ring = useRef<HTMLDivElement>(null);
   const dot = useRef<HTMLDivElement>(null);
-  const { lite, dormant, shellMode } = useMotionPreferences();
+  const { graphics, reducedMotion, dormant, shellMode } = useMotionPreferences();
   const pathname = usePathname();
   useEffect(() => {
-    if (lite || dormant || shellMode || !window.matchMedia("(pointer: fine)").matches) return;
+    if (reducedMotion || dormant || shellMode || !graphics.pointerFine || !graphics.hoverCapable)
+      return;
     const el = ring.current;
     const center = dot.current;
     if (!el || !center) return;
@@ -60,7 +61,7 @@ export function Cursor() {
       document.documentElement.classList.remove("custom-cursor-enabled");
       hide();
     };
-  }, [lite, dormant, shellMode, pathname]);
+  }, [reducedMotion, dormant, shellMode, graphics.pointerFine, graphics.hoverCapable, pathname]);
   return (
     <>
       <div className="cursor-ring" ref={ring} aria-hidden="true" />

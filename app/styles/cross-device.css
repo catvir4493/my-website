@@ -1,0 +1,220 @@
+/* Layout density is independent of material fidelity and render resolution. */
+[data-layout="compact-desktop"] .status-bar {
+  gap: 14px;
+}
+[data-layout="compact-desktop"] .main-nav {
+  display: flex;
+  position: static;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
+  gap: clamp(8px, 1.5vw, 17px);
+}
+[data-layout="compact-desktop"] .main-nav a {
+  height: 100%;
+  padding: 0;
+  font-size: clamp(10px, 1.4vw, 14px);
+}
+[data-layout="compact-desktop"] .main-nav a.active::after {
+  left: 0;
+  right: 0;
+}
+[data-layout="compact-desktop"] .mobile-menu {
+  display: none;
+}
+[data-layout="compact-desktop"] .nav-number,
+[data-layout="compact-desktop"] .header-status {
+  display: none;
+}
+[data-layout="compact-desktop"] .hero-main {
+  display: grid;
+  grid-template-columns: minmax(0, 0.98fr) minmax(0, 1.02fr);
+  align-items: center;
+  min-height: 590px;
+  gap: 12px;
+}
+[data-layout="compact-desktop"] .hero-copy {
+  min-width: 0;
+}
+[data-layout="compact-desktop"] .hero h1 {
+  font-size: clamp(48px, 6.8vw, 76px);
+  line-height: 1.02;
+}
+[data-layout="compact-desktop"] .hero-visual {
+  height: clamp(475px, 57vw, 560px);
+  min-width: 0;
+  margin-top: 0;
+}
+[data-layout="compact-desktop"] .hero-actions {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+[data-layout="compact-desktop"] .hero-actions .button {
+  padding: 13px 15px;
+}
+[data-layout="compact-desktop"] .hero-topline {
+  gap: 16px;
+}
+[data-layout="compact-desktop"] .hero-topline > span:first-child {
+  max-width: 70%;
+  line-height: 1.7;
+}
+[data-layout="compact-desktop"] .core-label {
+  left: 6%;
+}
+[data-layout="compact-desktop"] .core-bottom {
+  left: 4%;
+  right: 2%;
+}
+[data-layout="compact-desktop"] .core-bottom > span:last-child {
+  display: none;
+}
+[data-layout="compact-desktop"] .core-project-node {
+  padding: 9px 10px;
+  font-size: 9px;
+}
+[data-layout="compact-desktop"] .project-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+[data-layout="compact-desktop"] .module-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+[data-layout="tablet"] .hero-main {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+[data-layout="tablet"] .hero-visual {
+  width: 100%;
+  height: 490px;
+}
+[data-layout="tablet"] .hero-copy {
+  padding-top: 35px;
+}
+[data-layout="tablet"] .project-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+[data-layout="phone"] .hero-main {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: auto;
+}
+[data-layout="phone"] .hero-visual {
+  width: 100%;
+  height: 350px;
+}
+[data-layout="phone"] .hero h1 {
+  font-size: clamp(53px, 10vw, 82px);
+}
+[data-layout="phone"] .project-grid {
+  grid-template-columns: 1fr;
+}
+@media (max-width: 420px) {
+  [data-layout="phone"] .hero-visual {
+    height: 300px;
+  }
+}
+
+/* Pointer effects follow input capabilities, including small desktop windows. */
+.project-visual:not([data-visual-visible="true"]) *,
+.system-architecture:not([data-visual-visible="true"]) * {
+  animation-play-state: paused !important;
+}
+[data-mobile-static-core="true"] .optical-sensor {
+  animation: none !important;
+}
+@media (max-width: 639px) and (pointer: coarse) {
+  .optical-sensor {
+    animation: none !important;
+  }
+}
+@media (pointer: fine) and (hover: hover) {
+  [data-pointer="fine"][data-hover="true"] [data-cursor-glow]::after {
+    display: block;
+  }
+}
+[data-pointer="coarse"] [data-cursor-glow]::after,
+[data-hover="false"] [data-cursor-glow]::after {
+  display: none;
+}
+[data-reduced-motion="true"] {
+  --motion-amount: 0;
+  --parallax-background: 0;
+  --parallax-grid: 0;
+  --parallax-atmosphere: 0;
+  --parallax-hud: 0;
+}
+[data-reduced-motion="true"] .hero .core-canvas {
+  transform: none;
+}
+[data-mobile-static-core="true"] .hero .core-canvas {
+  transform: none;
+}
+
+/* Opt-in diagnostics use an opaque, readable surface without GPU filters. */
+.graphics-debug {
+  position: fixed;
+  z-index: 160;
+  right: 12px;
+  top: 90px;
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100dvh - 110px);
+  overflow: auto;
+  padding: 14px;
+  background: #0b141bf7;
+  border: 1px solid #506773;
+  color: #d4e2e7;
+  font: 10px/1.6 var(--font-mono);
+}
+.graphics-debug summary {
+  cursor: pointer;
+  font-size: 11px;
+  color: #b9e7ee;
+}
+.graphics-debug dl {
+  margin: 14px 0;
+}
+.graphics-debug dl > div {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 12px;
+  padding: 3px 0;
+}
+.graphics-debug dt {
+  color: #9cabb5;
+}
+.graphics-debug dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.graphics-debug p {
+  margin: 12px 0 6px;
+}
+.graphics-debug ul {
+  padding-left: 16px;
+}
+
+@media (min-width: 640px) and (max-width: 760px) {
+  [data-layout="compact-desktop"] .status-bar {
+    padding-inline: 4%;
+    gap: 10px;
+  }
+  [data-layout="compact-desktop"] .brand {
+    font-size: 15px;
+  }
+  [data-layout="compact-desktop"] .hero h1 {
+    font-size: 46px;
+  }
+  [data-layout="compact-desktop"] .hero-visual {
+    height: 420px;
+  }
+  [data-layout="compact-desktop"] .hero-copy {
+    padding-top: 20px;
+  }
+  [data-layout="compact-desktop"] .hero-tags {
+    flex-wrap: wrap;
+  }
+}

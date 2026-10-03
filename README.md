@@ -1,21 +1,26 @@
-# MARCELL.OS v1.5.0 — OPTICS & PERCEPTUAL LIGHTING PASS
+# MARCELL.OS v1.5.1 — CROSS-DEVICE VISUAL CONSISTENCY
 
 Live site: https://marcell-os.vercel.app
 
-v1.5 在 v1.4 材质系统上校准镜头、解析式棚灯形状、前后景衰减、局部反射与信号尾部，加入渐变材质 LOD 和 Shader 失败恢复。保留既有布局、项目事实、GitHub 接口、终端、教学实验、项目交接及手机静态 Core。参见 [v1.5 光学实施与验证报告](docs/optics-lighting-v1.5.md)；[v1.4 材质报告](docs/material-fidelity-v1.4.md)、[v1.3 报告](docs/cinematic-interaction-v1.3.md)和 [v1.2 报告](docs/visual-systems-v1.2.md)作为历史记录保留。
+v1.5.1 将 Layout Class、Graphics Quality、输入能力、动态偏好和渲染 DPR 分开。需要 WebGL 时由一次本地能力检测决定会话画质（优先在一次性 OffscreenCanvas Worker 中执行；不支持时在首次绘制后回退主线程）；普通静态手机不初始化未使用的 GPU，以未知能力的 MEDIUM 保守预算起步。调整窗口、浏览器缩放和 DPR 不重新选档。840px 精细指针环境使用 Compact Desktop；触屏手机静态 Core 是独立产品策略；Reduced Motion 冻结 WebGL，保留材质和静态光学。
 
-对运行中的生产构建进行视觉验证：
+参见 [v1.5.1 跨设备一致性报告](docs/cross-device-consistency-v1.5.1.md)。[v1.5 光学报告](docs/optics-lighting-v1.5.md)、[v1.4 材质报告](docs/material-fidelity-v1.4.md)、[v1.3 报告](docs/cinematic-interaction-v1.3.md)、[v1.2 报告](docs/visual-systems-v1.2.md)保留为历史记录。
+
+生产也支持显式诊断 URL：`/?debugGraphics=1`；普通访问没有面板。`?quality=high|medium|low` 只改变图形档位；`?debugGraphics=1&layout=phone|tablet|compact|desktop|wide` 用于布局 QA。屏幕信息只显示浏览器提供的 CSS 像素，不推算物理面板分辨率；所有能力数据仅留在浏览器内存，不上传、不持久化。
+
+对运行中的生产构建进行验证：
 
 ```powershell
-node scripts/visual-systems-qa.mjs http://localhost:3000 artifacts/v1.5
-node scripts/visual-systems-performance.mjs artifacts/v1.5
-node scripts/material-captures.mjs http://localhost:3000 artifacts/v1.5/after
-node scripts/material-resources.mjs http://localhost:3000 artifacts/v1.5
-node scripts/lighthouse-audit.mjs http://localhost:3000 artifacts/v1.5
-node scripts/optics-comparison.mjs artifacts/v1.5
+node scripts/graphics-consistency-qa.mjs http://localhost:3000 artifacts/v1.5.1
+node scripts/graphics-controls-qa.mjs http://localhost:3000 artifacts/v1.5.1
+node scripts/visual-systems-performance.mjs artifacts/v1.5.1
+node scripts/material-resources.mjs http://localhost:3000 artifacts/v1.5.1
+node scripts/lighthouse-audit.mjs http://localhost:3000 artifacts/v1.5.1
+node scripts/graphics-comparison.mjs artifacts/v1.5.1
+node scripts/optics-comparison-qa.mjs artifacts/v1.5.1
 ```
 
-截图及测量记录写入忽略提交的 `artifacts/v1.5/`。先在 v1.4 构建保存 `before/`，再在 v1.5 构建保存 `after/`，最后生成可拖动的 `comparison.html`。性能脚本只统计默认帧缓冲的 Core 呈现帧，不把浏览器 RAF 当作 Core 帧率。资源探针检查 GL 对象生命周期；不等于 GPU 内存字节，也不会显示为硬件遥测。Playwright WebKit 用于 Safari 引擎验证，不能替代 Apple 设备上的原生 Safari 测试。
+截图及测量记录保存到忽略提交的 `artifacts/v1.5.1/`。`graphics-baseline.mjs` 在修改前运行，保存 v1.5 的同视口截图；比较器包括升级前后、HIGH/MEDIUM、Case A/B Core 和静态材质对照，支持拖动与键盘。能力矩阵覆盖 11 种视口与 5 档 DPR。Windows Scaling 与 Browser Zoom 是 CSS 视口 / DPR 模拟，未操作真实 Windows 显示设置。性能脚本统计默认帧缓冲呈现次数，不把 RAF 当作 Core FPS；GL 对象计数不等于显存字节。Playwright WebKit 不能替代 Apple 设备的原生 Safari。
 
 开发调试仅在 `npm run dev` 下启用：`/?debugLighting=1` 或 `/?debugMaterials=1`。可比较四种 FOV、独立灯光和材质；`&shaderFault=1` 注入实际编译失败来验证 v1.4 恢复。运行 `node scripts/optics-debug-qa.mjs` 保存调试截图与验证记录。生产构建忽略这些参数。
 
@@ -104,7 +109,7 @@ Ctrl / Cmd + K 打开命令面板：ordered fuzzy search，箭头选择，Enter 
 
 ## Motion, performance, and accessibility
 
-保留原有轻量 Compute Core，项目节点 hover / focus 调整对应信号颜色，click 导航。WebGL DPR 限制为 1–1.5；离开视口和隐藏标签页暂停渲染，移动端与 reduced motion 使用静态 fallback。没有虚构 CPU load。项目、lab 和 terminal 使用语义化链接 / 表单控件、focus styles 和 dialog focus trap。GitHub 的 loading 状态由真实请求驱动，没有人工延时。
+保留原有轻量 Compute Core，项目节点 hover / focus 调整对应信号颜色，click 导航。WebGL DPR 按画质限制为 HIGH ≤1.5 / MEDIUM ≤1.25 / LOW ≤1，DPR 不决定材质档位；离开视口、Quiet Mode 和隐藏标签页暂停渲染。触屏手机使用静态 fallback；桌面 reduced motion 保留同一个 WebGL renderer，以 demand 模式呈现静态材质。没有虚构 CPU load。项目、lab 和 terminal 使用语义化链接 / 表单控件、focus styles 和 dialog focus trap。GitHub 的 loading 状态由真实请求驱动，没有人工延时。
 
 ## Deployment / verification
 

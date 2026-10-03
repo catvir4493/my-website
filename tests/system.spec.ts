@@ -193,7 +193,7 @@ test("converter preserves 64-bit precision and reports invalid input", async ({ 
   await expect(page.getByRole("status")).toContainText("valid for the selected base");
 });
 
-test("mobile layouts fit the viewport and use the lightweight hero", async ({ page }) => {
+test("phone layouts fit the viewport without downgrading desktop input graphics", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const route of ["/", "/projects", "/projects/vision-navigation", "/lab"]) {
     await page.goto(route);
@@ -205,18 +205,17 @@ test("mobile layouts fit the viewport and use the lightweight hero", async ({ pa
     expect(dimensions.page).toBeLessThanOrEqual(dimensions.viewport);
   }
   await page.goto("/");
-  await expect(page.locator(".core-fallback")).toBeVisible();
-  await expect(page.locator(".core-canvas canvas")).toHaveCount(0);
+  await expect(page.locator(".core-canvas canvas")).toBeVisible();
   await page.getByRole("button", { name: "Open navigation" }).click();
   await page.getByRole("navigation").getByRole("link", { name: "Lab", exact: false }).click();
   await expect(page).toHaveURL(/\/lab/);
 });
 
-test("reduced motion disables WebGL and boot animation", async ({ page }) => {
+test("reduced motion freezes WebGL and disables boot animation", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  await expect(page.locator(".core-fallback")).toBeVisible();
-  await expect(page.locator(".core-canvas canvas")).toHaveCount(0);
+  await expect(page.locator(".core-canvas")).toHaveAttribute("data-core-mode", "frozen");
+  await expect(page.locator(".core-canvas canvas")).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 

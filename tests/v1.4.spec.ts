@@ -27,7 +27,7 @@ test("PBR shaders compile without graphics errors and survive keyboard navigatio
   expect(errors).toEqual([]);
 });
 
-test("material quality can release the full scene and restore it without losing project links", async ({
+test("reduced motion freezes and resumes the same renderer without losing project links", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -39,8 +39,8 @@ test("material quality can release the full scene and restore it without losing 
   for (let index = 0; index < 2; index++) {
     await expect(page.locator(".core-canvas canvas")).toBeVisible();
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await expect(page.locator(".core-canvas canvas")).toHaveCount(0);
-    await expect(page.locator(".core-fallback")).toBeVisible();
+    await expect(page.locator(".core-canvas")).toHaveAttribute("data-core-mode", "frozen");
+    await expect(page.locator(".core-canvas canvas")).toBeVisible();
     await expect(page.locator(".core-project-node")).toHaveCount(4);
     await page.emulateMedia({ reducedMotion: "no-preference" });
   }
@@ -62,7 +62,7 @@ test("small devices retain project surface cues and readable terminal output", a
   const input = page.getByRole("textbox", { name: "Terminal command" });
   await input.fill("neofetch");
   await input.press("Enter");
-  await expect(page.getByRole("dialog")).toContainText("v1.5.0");
+  await expect(page.getByRole("dialog")).toContainText("v1.5.1");
   await page.keyboard.press("Escape");
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(width).toBeLessThanOrEqual(390);

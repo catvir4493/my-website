@@ -132,7 +132,6 @@
   padding: 3px 8px;
   border: 1px solid #5a7181;
 }
-[data-quality="low"] .project-card::after,
 [data-reduced-motion="true"] .project-card::after {
   display: none;
 }

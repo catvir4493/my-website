@@ -5,10 +5,19 @@ import {
   useEffect,
   useState,
   useSyncExternalStore,
+  Suspense,
   type ReactNode,
 } from "react";
 import { MotionConfig } from "framer-motion";
-import { getVisualQuality, subscribeVisualQuality, type VisualQuality } from "@/lib/visual-quality";
+import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
+import {
+  getGraphicsProfile,
+  getServerGraphicsProfile,
+  subscribeGraphicsProfile,
+  refreshGraphicsProfile,
+  serverProfile,
+} from "@/lib/graphics/profile";
 import { motionTiming, systemEase } from "@/lib/motion";
 
 const subscribeVisibility = (callback: () => void) => {
@@ -16,11 +25,19 @@ const subscribeVisibility = (callback: () => void) => {
   return () => document.removeEventListener("visibilitychange", callback);
 };
 const visibilitySnapshot = () => document.hidden;
-const reducedSnapshot = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const GraphicsDebug = dynamic(() => import("@/components/visual/graphics-debug"), { ssr: false });
+function GraphicsQuerySync() {
+  const search = useSearchParams();
+  useEffect(() => {
+    refreshGraphicsProfile();
+  }, [search]);
+  return null;
+}
 const MotionContext = createContext({
   paused: false,
   lite: true,
-  quality: "low" as VisualQuality,
+  quality: serverProfile.quality,
+  graphics: serverProfile,
   dormant: false,
   commandMode: false,
   shellMode: false,
@@ -33,16 +50,17 @@ const MotionContext = createContext({
 
 export function MotionProvider({ children }: { children: ReactNode }) {
   const [paused, setPaused] = useState(false);
-  const quality = useSyncExternalStore(
-    subscribeVisualQuality,
-    getVisualQuality,
-    () => "low" as VisualQuality,
+  const graphics = useSyncExternalStore(
+    subscribeGraphicsProfile,
+    getGraphicsProfile,
+    getServerGraphicsProfile,
   );
+  const quality = graphics.quality;
   const hidden = useSyncExternalStore(subscribeVisibility, visibilitySnapshot, () => false);
   const [commandMode, setCommandMode] = useState(false);
   const [shellMode, setShellMode] = useState(false);
   const [quiet, setQuiet] = useState(false);
-  const reducedMotion = useSyncExternalStore(subscribeVisualQuality, reducedSnapshot, () => false);
+  const reducedMotion = graphics.reducedMotion;
   useEffect(() => {
     let last = 0;
     let timer: ReturnType<typeof setTimeout>;
@@ -64,7 +82,8 @@ export function MotionProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("visibilitychange", activity);
     };
   }, []);
-  const lite = quality === "low";
+  // Legacy motion consumers use lite only for motion preference/product policy.
+  const lite = reducedMotion || graphics.mobileStaticCorePolicy;
   const dormant = paused || hidden;
   return (
     <MotionContext.Provider
@@ -72,6 +91,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
         paused,
         lite,
         quality,
+        graphics,
         dormant,
         commandMode,
         shellMode,
@@ -83,7 +103,7 @@ export function MotionProvider({ children }: { children: ReactNode }) {
       }}
     >
       <MotionConfig
-        reducedMotion={paused || lite ? "always" : "user"}
+        reducedMotion={paused || reducedMotion ? "always" : "user"}
         transition={{ duration: motionTiming.standard, ease: systemEase }}
       >
         <div
@@ -91,6 +111,12 @@ export function MotionProvider({ children }: { children: ReactNode }) {
           data-motion={paused ? "paused" : "active"}
           data-lite={lite}
           data-quality={quality}
+          data-layout={graphics.layoutClass}
+          data-pointer={graphics.pointerType}
+          data-hover={graphics.hoverCapable}
+          data-mobile-static-core={graphics.mobileStaticCorePolicy}
+          data-graphics-ready={graphics.ready}
+          data-graphics-probe={graphics.capabilities.probeMethod || "pending"}
           data-dormant={dormant}
           data-command-mode={commandMode}
           data-shell-mode={shellMode}
@@ -98,7 +124,11 @@ export function MotionProvider({ children }: { children: ReactNode }) {
           data-reduced-motion={reducedMotion}
           data-system-state={commandMode || shellMode ? "FOCUS" : quiet ? "IDLE" : "ACTIVE"}
         >
+          <Suspense fallback={null}>
+            <GraphicsQuerySync />
+          </Suspense>
           {children}
+          {graphics.debug && <GraphicsDebug />}
         </div>
       </MotionConfig>
     </MotionContext.Provider>
